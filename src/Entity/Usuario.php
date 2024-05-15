@@ -83,9 +83,6 @@ class Usuario implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private bool $isVerified = false;
 
-    #[ORM\Column(length: 255)]
-    private ?string $token = null;
-
     public function __construct()
     {
         $this->comentarios = new ArrayCollection();
@@ -380,15 +377,4 @@ class Usuario implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getToken(): ?string
-    {
-        return $this->token;
-    }
-
-    public function setToken(string $token): static
-    {
-        $this->token = $token;
-
-        return $this;
-    }
 }

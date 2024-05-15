@@ -22,7 +22,7 @@ class Comentario
     private ?int $puntuacion = null;
 
     #[ORM\Column]
-    private ?int $complejidad = null;
+    private ?string $complejidad = null;
 
     #[ORM\ManyToOne(inversedBy: 'comentarios')]
     private ?Usuario $usuario = null;
@@ -78,7 +78,7 @@ class Comentario
         return $this->complejidad;
     }
 
-    public function setComplejidad(int $complejidad): static
+    public function setComplejidad(string $complejidad): static
     {
         $this->complejidad = $complejidad;
 
