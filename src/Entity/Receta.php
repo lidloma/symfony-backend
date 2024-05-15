@@ -71,6 +71,12 @@ class Receta
     #[ORM\Column(length: 255)]
     private ?string $nombre = null;
 
+    /**
+     * @var Collection<int, Usuario>
+     */
+    #[ORM\ManyToMany(targetEntity: Usuario::class, mappedBy: 'denunciasRecetas')]
+    private Collection $denunciasUsuarios;
+
     public function __construct()
     {
         $this->ingredientes = new ArrayCollection();
@@ -79,6 +85,7 @@ class Receta
         $this->imagenes = new ArrayCollection();
         $this->categorias = new ArrayCollection();
         $this->comentarios = new ArrayCollection();
+        $this->denunciasUsuarios = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -316,6 +323,33 @@ class Receta
     public function setNombre(string $nombre): static
     {
         $this->nombre = $nombre;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Usuario>
+     */
+    public function getDenunciasUsuarios(): Collection
+    {
+        return $this->denunciasUsuarios;
+    }
+
+    public function addDenunciasUsuario(Usuario $denunciasUsuario): static
+    {
+        if (!$this->denunciasUsuarios->contains($denunciasUsuario)) {
+            $this->denunciasUsuarios->add($denunciasUsuario);
+            $denunciasUsuario->addDenunciasReceta($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDenunciasUsuario(Usuario $denunciasUsuario): static
+    {
+        if ($this->denunciasUsuarios->removeElement($denunciasUsuario)) {
+            $denunciasUsuario->removeDenunciasReceta($this);
+        }
 
         return $this;
     }

@@ -39,9 +39,16 @@ class Comentario
     #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'comentario')]
     private Collection $comentarios;
 
+    /**
+     * @var Collection<int, Usuario>
+     */
+    #[ORM\ManyToMany(targetEntity: Usuario::class, mappedBy: 'denunciaComentarios')]
+    private Collection $denunciasUsuarios;
+
     public function __construct()
     {
         $this->comentarios = new ArrayCollection();
+        $this->denunciasUsuarios = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -146,6 +153,33 @@ class Comentario
             if ($comentario->getComentario() === $this) {
                 $comentario->setComentario(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Usuario>
+     */
+    public function getDenunciasUsuarios(): Collection
+    {
+        return $this->denunciasUsuarios;
+    }
+
+    public function addDenunciasUsuario(Usuario $denunciasUsuario): static
+    {
+        if (!$this->denunciasUsuarios->contains($denunciasUsuario)) {
+            $this->denunciasUsuarios->add($denunciasUsuario);
+            $denunciasUsuario->addDenunciaComentario($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDenunciasUsuario(Usuario $denunciasUsuario): static
+    {
+        if ($this->denunciasUsuarios->removeElement($denunciasUsuario)) {
+            $denunciasUsuario->removeDenunciaComentario($this);
         }
 
         return $this;

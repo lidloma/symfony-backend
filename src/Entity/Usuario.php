@@ -83,6 +83,18 @@ class Usuario implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private bool $isVerified = false;
 
+    /**
+     * @var Collection<int, Comentario>
+     */
+    #[ORM\ManyToMany(targetEntity: Comentario::class, inversedBy: 'denunciasUsuarios')]
+    private Collection $denunciaComentarios;
+
+    /**
+     * @var Collection<int, Receta>
+     */
+    #[ORM\ManyToMany(targetEntity: Receta::class, inversedBy: 'denunciasUsuarios')]
+    private Collection $denunciasRecetas;
+
     public function __construct()
     {
         $this->comentarios = new ArrayCollection();
@@ -90,6 +102,8 @@ class Usuario implements UserInterface, PasswordAuthenticatedUserInterface
         $this->recetas = new ArrayCollection();
         $this->listas = new ArrayCollection();
         $this->usuarios = new ArrayCollection();
+        $this->denunciaComentarios = new ArrayCollection();
+        $this->denunciasRecetas = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -373,6 +387,54 @@ class Usuario implements UserInterface, PasswordAuthenticatedUserInterface
     public function setVerified(bool $isVerified): static
     {
         $this->isVerified = $isVerified;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Comentario>
+     */
+    public function getDenunciaComentarios(): Collection
+    {
+        return $this->denunciaComentarios;
+    }
+
+    public function addDenunciaComentario(Comentario $denunciaComentario): static
+    {
+        if (!$this->denunciaComentarios->contains($denunciaComentario)) {
+            $this->denunciaComentarios->add($denunciaComentario);
+        }
+
+        return $this;
+    }
+
+    public function removeDenunciaComentario(Comentario $denunciaComentario): static
+    {
+        $this->denunciaComentarios->removeElement($denunciaComentario);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Receta>
+     */
+    public function getDenunciasRecetas(): Collection
+    {
+        return $this->denunciasRecetas;
+    }
+
+    public function addDenunciasReceta(Receta $denunciasReceta): static
+    {
+        if (!$this->denunciasRecetas->contains($denunciasReceta)) {
+            $this->denunciasRecetas->add($denunciasReceta);
+        }
+
+        return $this;
+    }
+
+    public function removeDenunciasReceta(Receta $denunciasReceta): static
+    {
+        $this->denunciasRecetas->removeElement($denunciasReceta);
 
         return $this;
     }
