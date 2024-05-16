@@ -12,18 +12,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
+#[Route('/api/usuarios')]
 class UsuarioController extends AbstractController
 {
-    #[Route('/', name: 'app_usuario')]
-    public function index(): JsonResponse
-    {
-        return $this->json([
-            'message' => 'Welcome to your new controller!',
-            'path' => 'src/Controller/UsuarioController.php',
-        ]);
-    }
-
-    #[Route('/api/login', name: 'app_login', methods: ['POST'])]
+  
+    //Loguear al usuario y obtener el token
+    #[Route('/login', name: 'app_login', methods: ['POST'])]
     public function login(UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager, Request $request, JWTTokenManagerInterface $JWTManager): JsonResponse
     {
 
@@ -46,7 +40,7 @@ class UsuarioController extends AbstractController
     }
 
   
-    #[Route('/api/registro', name: 'app_registro', methods: ['POST'])]
+    #[Route('/registro', name: 'app_registro', methods: ['POST'])]
 
     public function registro(UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager, Request $request): JsonResponse
     {
@@ -83,7 +77,7 @@ class UsuarioController extends AbstractController
 
 
     //Obtener datos del usuario a través de su email
-    #[Route('/api/usuario', name: 'app_get_usuario', methods: ['POST'])]
+    #[Route('/email', name: 'app_usuario_email', methods: ['POST'])]
 
     public function getUsuario(EntityManagerInterface $entityManager, Request $request): JsonResponse
     {
@@ -118,8 +112,31 @@ class UsuarioController extends AbstractController
             return new JsonResponse($data, Response::HTTP_OK);
         }
 
+        #[Route('/', name: 'app_get_usuario', methods: ['GET'])]
+        public function getUsuarios(EntityManagerInterface $entityManager, Request $request): JsonResponse {
+            $usuarios = $entityManager->getRepository(Usuario::class)->findAll();
+            $data = [];
+    
+            foreach ($usuarios as $usuario) {
+                $data[] = [
+                    'id' => $usuario->getId(),
+                    'email' => $usuario->getEmail(),
+                    'nombre' => $usuario->getNombre(),
+                    'apellidos' => $usuario->getApellidos(),
+                    'nombreUsuario' => $usuario->getNombreUsuario(),
+                    'provincia' => $usuario->getProvincia(),
+                    'roles' => $usuario->getRoles(),
+                    'imagen' => $usuario->getImagen(),
+                ];
+            }
+    
+            return new JsonResponse($data, Response::HTTP_OK);
+        }
 
-        // #[Route('/api/usuario/ususario_categorias_recetas', name: 'app_get_usuario', methods: ['POST'])]
+
+
+
+        // #[Route('/api/usuario/usuario_categorias_recetas', name: 'app_get_usuario', methods: ['POST'])]
         // public function obtenerRecetasCategoriasUsuario(Request $request, EntityManagerInterface $entityManager): JsonResponse{
         //     $body = json_decode($request->getContent(), true);
 
@@ -172,7 +189,41 @@ class UsuarioController extends AbstractController
         // }
        
 
+// //Obtener datos del usuario a través de su email
+// #[Route('/email', name: 'app_usuario_email', methods: ['POST'])]
 
+// public function getUsuarioPrueba(string $email, UsuarioRepository $usuarioRepository): JsonResponse {
+//     $usuario = $usuarioRepository->find($email);
+
+//     if (!$usuario) {
+//         return new JsonResponse(['message' => 'Usuario no encontrado'], Response::HTTP_NOT_FOUND);
+//     }
+    
+//     //EJEMPLO DE COMO OBTENER LOS DATOS DE UNA RECETA 
+//     // $pasos = [];
+//     //     foreach ($receta->getPasos() as $paso) {
+//     //         $pasos[] = [
+//     //             'id' => $paso->getId(),
+//     //             'descripcion' => $paso->getDescripcion(),
+//     //             'imagen' => $paso->getImagen(),
+//     //             'numero' => $paso->getNumero(),
+//     //         ];
+//     //     }
+
+//     $data = [
+//         'id' => $usuario->getId(),
+//         'email' => $usuario->getEmail(),
+//         'nombre' => $usuario->getNombre(),
+//         'apellidos' => $usuario->getApellidos(),
+//         'nombreUsuario' => $usuario->getNombreUsuario(),
+//         'provincia' => $usuario->getProvincia(),
+//         'roles' => $usuario->getRoles(),
+//         'imagen' => $usuario->getImagen(),
+//     ];
+
+//     return new JsonResponse($data, Response::HTTP_OK);
+    
+//     }
 
 
 
