@@ -143,22 +143,45 @@ class RecetaController extends AbstractController
 
             $categorias = [];
             foreach ($receta->getCategorias() as $categoria) {
-                $categorias[] = $categoria->getNombre();
+                $categorias[] = [
+                    'id' => $categoria->getId(),
+                    'nombre' => $categoria->getNombre(),
+                    'estado' => $categoria->getEstado(),
+                ];
             }
     
             $comentarios = [];
             foreach ($receta->getComentarios() as $comentario) {
-                $comentarios[] = $comentario->getDescripcion();
+                $comentarios[] = [
+                'id' => $comentario->getId(),
+                'usuario_id' => $comentario->getUsuario(),
+                'receta_id' => $comentario->getReceta(),
+                'comentario_id' => $comentario->getComentarios(),
+                'descripcion' => $comentario->getDescripcion(),
+                'puntuacion' => $comentario->getPuntuacion(),
+                'complejidad' => $comentario->getComplejidad()
+                
+                ];
             }
             
             $imagenes = [];
             foreach ($receta->getImagenes() as $imagen) {
-                $imagenes[] = $imagen->getImagen(); 
+                $imagenes[] = [
+                'id' => $imagen->getId(),
+                'receta_id' => $imagen->getReceta(),
+                'imagen' => $imagen->getImagen(),
+                
+            ]; 
             }
     
             $ingredientes = [];
             foreach ($receta->getIngredientes() as $ingrediente) {
-                $ingredientes[] = $ingrediente->getNombre(); 
+                $ingredientes[] = [
+                    'id' => $ingrediente->getId(),
+                    'descripcion' => $ingrediente->getNombre(),
+                    'imagen' => $ingrediente->getCantidad(),
+                    'numero' => $ingrediente->getUnidad(),
+                ]; 
             }
     
             $pasos = [];
@@ -178,7 +201,7 @@ class RecetaController extends AbstractController
                 'comentarios' => $comentarios,
                 'descripcion' => $receta->getDescripcion(),
                 'estado' => $receta->getEstado(),
-                'fecha' => $receta->getFecha()->format('Y-m-d'),
+                'fecha' => $receta->getFecha()->format('d-m-Y'),
                 'imagen' => $imagenes, 
                 'ingrediente' => $ingredientes, 
                 'usuario' => $receta->getUsuario()->getNombreUsuario(),
@@ -237,6 +260,9 @@ class RecetaController extends AbstractController
         $categorias[] = [
             'id' => $categoria->getId(),
             'nombre' => $categoria->getNombre(),
+            'estado' => $categoria->getEstado(),
+            'imagen' => $categoria->getImagen(),
+
         ];
     }
 

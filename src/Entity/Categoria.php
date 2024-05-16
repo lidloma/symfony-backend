@@ -33,6 +33,9 @@ class Categoria
     #[ORM\ManyToMany(targetEntity: Receta::class, mappedBy: 'categorias')]
     private Collection $recetas;
 
+    #[ORM\Column(length: 255)]
+    private ?string $imagen = null;
+
     public function __construct()
     {
         $this->usuarios = new ArrayCollection();
@@ -118,6 +121,18 @@ class Categoria
         if ($this->recetas->removeElement($receta)) {
             $receta->removeCategoria($this);
         }
+
+        return $this;
+    }
+
+    public function getImagen(): ?string
+    {
+        return $this->imagen;
+    }
+
+    public function setImagen(string $imagen): static
+    {
+        $this->imagen = $imagen;
 
         return $this;
     }
