@@ -17,7 +17,101 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/usuarios')]
 class UsuarioController extends AbstractController
 {
-  
+
+    //Obtener a través de las categorías que sigue un usuario todas las recetas de esas categorías
+    #[Route('/{id}', name: 'app_usuario_id', methods: ['GET'])]
+    public function getDatosUsuarioId(UsuarioRepository $usuarioRepository, RecetaRepository $recetaRepository, string $id): JsonResponse {
+        $usuario = $usuarioRepository->find($id);
+
+        $categorias = [];
+        foreach ($usuario->getCategorias() as $categoria) {
+            $categorias[] = [
+                'id' => $categoria->getId(),
+                'nombre' => $categoria->getNombre(),
+                'estado' => $categoria->getEstado(),
+                'imagen' => $categoria->getEstado(),
+            ];
+        }
+
+        $comentarios = [];
+        foreach ($usuario->getComentarios() as $comentario) {
+            $comentarios[] = [
+            'id' => $comentario->getId(),
+            'usuario_id' => $comentario->getUsuario(),
+            'receta_id' => $comentario->getReceta(),
+            'comentario_id' => $comentario->getComentarios(),
+            'descripcion' => $comentario->getDescripcion(),
+            'puntuacion' => $comentario->getPuntuacion(),
+            'complejidad' => $comentario->getComplejidad()
+            
+            ];
+        }
+
+        //PUEDE QUE HAGA FALTA ANIDAR MÁS 
+        $recetas = [];
+        foreach ($usuario->getRecetas() as $receta) {
+            $recetas[] = [
+                'id' => $receta->getId(),
+                'nombre' => $receta->getNombre(),
+                'categorias' => $categorias,
+                'comentarios' => $comentarios,
+                'descripcion' => $receta->getDescripcion(),
+                'estado' => $receta->getEstado(),
+                'fecha' => $receta->getFecha()->format('d-m-Y'),
+                'imagen' => $receta->getImagen(),
+                'ingrediente' => $receta->getIngredientes(),
+                'usuario' => $receta->getUsuario()->getNombreUsuario(),
+                'tiempo' => $receta->getTiempo(),
+                'paso' => $receta->getPasos()
+            ];
+        }
+
+        $listas = [];
+        foreach ($usuario->getListas() as $lista) {
+            $listas[] = [
+                'id' => $lista->getId(),
+                'usuario_id' => $lista->getUsuario(),
+                'nombre' => $lista->getNombre(),
+                'descripcion' => $lista->getDescripcion(),
+                'imagen' => $lista->getImagen(),
+            ];
+        }
+
+        $usuarios = [];
+        foreach ($usuario->getUsuarios() as $usuario) {
+            $usuarios[] = [
+                'id' => $usuario->getId(),
+                'email' => $usuario->getEmail(),
+                'nombre' => $usuario->getNombre(),
+                'apellidos' => $usuario->getApellidos(),
+                'nombreUsuario' => $usuario->getNombreUsuario(),
+                'provincia' => $usuario->getProvincia(),
+                'roles' => $usuario->getRoles(),
+                'imagen' => $usuario->getImagen(),
+            ];
+        }
+
+
+
+        $data = [
+            'id' => $usuario->getId(),
+            'email' => $usuario->getEmail(),
+            'nombre' => $usuario->getNombre(),
+            'apellidos' => $usuario->getApellidos(),
+            'nombreUsuario' => $usuario->getNombreUsuario(),
+            'provincia' => $usuario->getProvincia(),
+            'roles' => $usuario->getRoles(),
+            'imagen' => $usuario->getImagen(),
+            'categorias' => $categorias,
+            'comentarios' => $comentarios,
+            'recetas' => $recetas,
+            'listas' => $listas,
+            'usuarios' => $usuarios,
+        ];
+    
+        return $this->json($data, Response::HTTP_OK);
+    }
+
     //Loguear al usuario y obtener el token
     #[Route('/login', name: 'app_login', methods: ['POST'])]
     public function login(UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager, Request $request, JWTTokenManagerInterface $JWTManager): JsonResponse {
@@ -134,8 +228,8 @@ class UsuarioController extends AbstractController
         }
 
         //Obtener a través de las categorías que sigue un usuario todas las recetas de esas categorías
-        #[Route('/categorias_receta_usuario/{id}', name: 'app_usuario_id', methods: ['GET'])]
-        public function getUsuarioId(UsuarioRepository $usuarioRepository, RecetaRepository $recetaRepository, string $id): JsonResponse
+        #[Route('/categorias_receta_usuario/{id}', name: 'app_usuario_id_categoria_receta', methods: ['GET'])]
+        public function getUsuarioIdCategoriaReceta(UsuarioRepository $usuarioRepository, RecetaRepository $recetaRepository, string $id): JsonResponse
         {
             $usuario = $usuarioRepository->find($id);
 
