@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Usuario;
+use App\Repository\CategoriaRepository;
 use App\Repository\RecetaRepository;
 use App\Repository\UsuarioRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Entity\Categoria;
 
 #[Route('/api/usuarios')]
 class UsuarioController extends AbstractController
@@ -20,79 +22,104 @@ class UsuarioController extends AbstractController
 
     //Obtener a través de las categorías que sigue un usuario todas las recetas de esas categorías
     #[Route('/{id}', name: 'app_usuario_id', methods: ['GET'])]
-    public function getDatosUsuarioId(UsuarioRepository $usuarioRepository, RecetaRepository $recetaRepository, string $id): JsonResponse {
+    public function getDatosUsuarioId(UsuarioRepository $usuarioRepository, RecetaRepository $recetaRepository, int $id): JsonResponse {
         $usuario = $usuarioRepository->find($id);
-
+    
+        // Obteniendo las categorías que sigue el usuario
         $categorias = [];
         foreach ($usuario->getCategorias() as $categoria) {
             $categorias[] = [
                 'id' => $categoria->getId(),
                 'nombre' => $categoria->getNombre(),
                 'estado' => $categoria->getEstado(),
-                'imagen' => $categoria->getEstado(),
+                'imagen' => $categoria->getImagen(),  // Asegúrate de que este método devuelve la imagen correcta
             ];
         }
-
+    
+        // Obteniendo los comentarios hechos por el usuario
         $comentarios = [];
         foreach ($usuario->getComentarios() as $comentario) {
             $comentarios[] = [
-            'id' => $comentario->getId(),
-            'usuario_id' => $comentario->getUsuario(),
-            'receta_id' => $comentario->getReceta(),
-            'comentario_id' => $comentario->getComentarios(),
-            'descripcion' => $comentario->getDescripcion(),
-            'puntuacion' => $comentario->getPuntuacion(),
-            'complejidad' => $comentario->getComplejidad()
-            
+                'id' => $comentario->getId(),
+                'usuario_id' => $comentario->getUsuario()->getId(),
+                'receta_id' => $comentario->getReceta()->getId(),
+                'descripcion' => $comentario->getDescripcion(),
+                'puntuacion' => $comentario->getPuntuacion(),
+                'complejidad' => $comentario->getComplejidad(),
             ];
         }
 
-        //PUEDE QUE HAGA FALTA ANIDAR MÁS 
+      
+        
+    
+        // Obteniendo las recetas creadas por el usuario
         $recetas = [];
         foreach ($usuario->getRecetas() as $receta) {
-            $recetas[] = [
-                'id' => $receta->getId(),
-                'nombre' => $receta->getNombre(),
-                'categorias' => $categorias,
-                'comentarios' => $comentarios,
-                'descripcion' => $receta->getDescripcion(),
-                'estado' => $receta->getEstado(),
-                'fecha' => $receta->getFecha()->format('d-m-Y'),
-                'imagen' => $receta->getImagen(),
-                'ingrediente' => $receta->getIngredientes(),
-                'usuario' => $receta->getUsuario()->getNombreUsuario(),
-                'tiempo' => $receta->getTiempo(),
-                'paso' => $receta->getPasos()
-            ];
-        }
+            $imagenesReceta = [];
+            foreach ($receta->getImagenes() as $imagenReceta) {
+                $imagenesReceta[] = [
+                    'id' => $imagenReceta->getId(),
+                    'imagen' => $imagenReceta->getImagen(),
+                    'receta_id' => $imagenReceta->getReceta()->getId(),
+                ];
+            }
 
+    $comentariosReceta = [];
+    foreach ($receta->getComentarios() as $comentarioReceta) {
+        $comentariosReceta[] = [
+            'id' => $comentarioReceta->getId(),
+            'descripcion' => $comentarioReceta->getDescripcion(),
+            'puntuacion' => $comentarioReceta->getPuntuacion(),
+            'complejidad' => $comentarioReceta->getComplejidad(),
+            'usuario_id' => $comentarioReceta->getUsuario()->getId(),
+            'receta_id' => $comentarioReceta->getReceta()->getId(),
+        ];
+    }
+
+    $recetas[] = [
+        'id' => $receta->getId(),
+        'nombre' => $receta->getNombre(),
+        'descripcion' => $receta->getDescripcion(),
+        'estado' => $receta->getEstado(),
+        'fecha' => $receta->getFecha()->format('d-m-Y'),
+        'imagen' => $imagenesReceta,
+        'ingredientes' => $receta->getIngredientes(),
+        'tiempo' => $receta->getTiempo(),
+        'pasos' => $receta->getPasos(),
+        'comentarios' => $comentariosReceta,
+        'numeroPersonas' => $receta->getNumeroPersonas(),
+        'complejidad' => $receta->getComplejidad(),
+    ];
+}
+    
+        // Obteniendo las listas del usuario
         $listas = [];
         foreach ($usuario->getListas() as $lista) {
             $listas[] = [
                 'id' => $lista->getId(),
-                'usuario_id' => $lista->getUsuario(),
+                'usuario_id' => $lista->getUsuario()->getId(),
                 'nombre' => $lista->getNombre(),
                 'descripcion' => $lista->getDescripcion(),
                 'imagen' => $lista->getImagen(),
             ];
         }
-
+    
+        // Obteniendo usuarios relacionados
         $usuarios = [];
-        foreach ($usuario->getUsuarios() as $usuario) {
+        foreach ($usuario->getUsuarios() as $relatedUsuario) {
             $usuarios[] = [
-                'id' => $usuario->getId(),
-                'email' => $usuario->getEmail(),
-                'nombre' => $usuario->getNombre(),
-                'apellidos' => $usuario->getApellidos(),
-                'nombreUsuario' => $usuario->getNombreUsuario(),
-                'provincia' => $usuario->getProvincia(),
-                'roles' => $usuario->getRoles(),
-                'imagen' => $usuario->getImagen(),
+                'id' => $relatedUsuario->getId(),
+                'email' => $relatedUsuario->getEmail(),
+                'nombre' => $relatedUsuario->getNombre(),
+                'apellidos' => $relatedUsuario->getApellidos(),
+                'nombreUsuario' => $relatedUsuario->getNombreUsuario(),
+                'provincia' => $relatedUsuario->getProvincia(),
+                'roles' => $relatedUsuario->getRoles(),
+                'imagen' => $relatedUsuario->getImagen(),
             ];
         }
-
-
-
+    
+        // Creando el arreglo final de datos del usuario
         $data = [
             'id' => $usuario->getId(),
             'email' => $usuario->getEmail(),
@@ -111,10 +138,11 @@ class UsuarioController extends AbstractController
     
         return $this->json($data, Response::HTTP_OK);
     }
+    
 
     //Loguear al usuario y obtener el token
     #[Route('/login', name: 'app_login', methods: ['POST'])]
-    public function login(UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager, Request $request, JWTTokenManagerInterface $JWTManager): JsonResponse {
+    public function login( UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager, Request $request, JWTTokenManagerInterface $JWTManager): JsonResponse {
         
         $body = json_decode($request->getContent(), true);
         $email = $body['email'];
@@ -148,6 +176,7 @@ class UsuarioController extends AbstractController
         $provincia = $body['provincia'];
         $roles = $body['roles'];
         $imagen = $body['imagen'];
+        $categorias = $body['categorias'];
 
         // Crear una nueva instancia de usuario
         $usuario = new Usuario();
@@ -158,7 +187,15 @@ class UsuarioController extends AbstractController
         $usuario->setProvincia($provincia);
         $usuario->setRoles($roles);
         $usuario->setImagen($imagen);
-
+        $categoriaRepository = $entityManager->getRepository(Categoria::class);
+        foreach($categorias as $categoriaData){
+            $categoriaId = $categoriaData['id'];
+            $categoria = $categoriaRepository->find($categoriaId);
+            if ($categoria) {
+                $usuario->addCategoria($categoria);
+            }
+        }
+    
         // Codificar la contraseña
         $usuario->setPassword($passwordHasher->hashPassword($usuario, $contrasenia));
 

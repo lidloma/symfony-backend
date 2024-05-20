@@ -17,7 +17,7 @@ class CategoriaController extends AbstractController
         $this->categoriaRepository = $categoriaRepository;
     }
 
-    #[Route('/', name: 'app_categoria')]
+    #[Route('/', name: 'app_categorias')]
     public function getCategorias(): JsonResponse
     {
         $categorias = $this->categoriaRepository->findAll();

@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Receta;
 use App\Form\RecetaType;
 use App\Repository\RecetaRepository;
+use Categoria;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
@@ -179,8 +180,8 @@ class RecetaController extends AbstractController
                 $ingredientes[] = [
                     'id' => $ingrediente->getId(),
                     'descripcion' => $ingrediente->getNombre(),
-                    'imagen' => $ingrediente->getCantidad(),
-                    'numero' => $ingrediente->getUnidad(),
+                    'cantidad' => $ingrediente->getCantidad(),
+                    'unidad' => $ingrediente->getUnidad(),
                 ]; 
             }
     
@@ -199,6 +200,7 @@ class RecetaController extends AbstractController
                 'nombre' => $receta->getNombre(),
                 'categorias' => $categorias,
                 'comentarios' => $comentarios,
+                'complejidad' => $receta->getComplejidad(),
                 'descripcion' => $receta->getDescripcion(),
                 'estado' => $receta->getEstado(),
                 'fecha' => $receta->getFecha()->format('d-m-Y'),
@@ -206,83 +208,56 @@ class RecetaController extends AbstractController
                 'ingrediente' => $ingredientes, 
                 'usuario' => $receta->getUsuario()->getNombreUsuario(),
                 'tiempo' => $receta->getTiempo(),
+                'numeroPersonas' => $receta->getNumeroPersonas(),
                 'paso' => $pasos
             ];
         
         return $this->json($data);
     }
 
-   
-    #[Route('/borrar/{id}', name: 'api_receta_delete', methods: ['DELETE'])]
-    public function delete(Receta $receta, EntityManagerInterface $entityManager): JsonResponse
+    #[Route('/crear', name: 'api_receta_crear', methods: ['POST'])]
+    public function crearReceta(EntityManagerInterface $entityManager, Request $request): JsonResponse
     {
-        $entityManager->remove($receta);
+        $body = json_decode($request->getContent(), true);
+
+        $tiempo = $body['tiempo'];
+        $descripcion = $body['descripcion'];
+        $estado = $body['estado'];
+        $fecha = $body['fecha'];
+        $nombre = $body['nombre'];
+        $categorias = $body['categorias'];
+        $paso = $body['paso'];
+        $imagen = $body['imagen'];
+        $ingrediente = $body['ingrediente'];
+        $usuario = $body['usuario'];
+        $numeroPersonas = $body['numeroPersonas'];
+        $complejidad = $body['complejidad'];
+
+        // Crear una nueva instancia de usuario
+        $receta = new Receta();
+        $receta->setTiempo($tiempo);
+        $receta->setDescripcion($descripcion);
+        $receta->setEstado($estado);
+        $receta->setFecha($fecha);
+        $receta->setNombre($nombre);
+        $receta->setNumeroPersonas($numeroPersonas);
+        $receta->setComplejidad($complejidad);
+
+
+        // $categoriaRepository = $entityManager->getRepository(Categoria::class);
+        // foreach($categorias as $categoriaData){
+        //     $categoriaId = $categoriaData['id'];
+        //     $categoria = $categoriaRepository->find($categoriaId);
+        //     if ($categoria) {
+        //         $receta->addCategoria($categoria);
+        //     }
+        // }
+    
+        // Guardar el receta en la base de datos
+        $entityManager->persist($receta);
         $entityManager->flush();
 
-        return new JsonResponse(['status' => 'Receta eliminada'], Response::HTTP_OK);
-    }
-
-    private function recetaToArray(Receta $receta): array {
-    $ingredientes = [];
-    foreach ($receta->getIngredientes() as $ingrediente) {
-        $ingredientes[] = [
-            'id' => $ingrediente->getId(),
-            'nombre' => $ingrediente->getNombre(),
-        ];
-    }
-
-    $pasos = [];
-    foreach ($receta->getPasos() as $paso) {
-        $pasos[] = [
-            'id' => $paso->getId(),
-            'descripcion' => $paso->getDescripcion(),
-        ];
-    }
-
-    $imagenes = [];
-    foreach ($receta->getImagenes() as $imagen) {
-        $imagenes[] = [
-            'id' => $imagen->getId(),
-            'url' => $imagen->getImagen(),
-        ];
-    }
-
-    $comentarios = [];
-    foreach ($receta->getComentarios() as $comentario) {
-        $comentarios[] = [
-            'id' => $comentario->getId(),
-            'contenido' => $comentario->getDescripcion(),
-        ];
-    }
-
-    $categorias = [];
-    foreach ($receta->getCategorias() as $categoria) {
-        $categorias[] = [
-            'id' => $categoria->getId(),
-            'nombre' => $categoria->getNombre(),
-            'estado' => $categoria->getEstado(),
-            'imagen' => $categoria->getImagen(),
-
-        ];
-    }
-
-    return [
-        'id' => $receta->getId(),
-        'tiempo' => $receta->getTiempo(),
-        'descripcion' => $receta->getDescripcion(),
-        'estado' => $receta->getEstado(),
-        'fecha' => $receta->getFecha()->format('d-m-Y'), 
-        'usuario' => [
-            'id' => $receta->getUsuario()->getId(),
-            'nombre' => $receta->getUsuario()->getNombre(), 
-        ],
-        'ingredientes' => $ingredientes,
-        'pasos' => $pasos,
-        'imagenes' => $imagenes,
-        'comentarios' => $comentarios,
-        'categorias' => $categorias,
-        'nombre' => $receta->getNombre(),
-        ];
+        return new JsonResponse(['message' => 'receta registrado con éxito'], Response::HTTP_CREATED);
     }
 
 }

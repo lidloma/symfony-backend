@@ -77,6 +77,12 @@ class Receta
     #[ORM\ManyToMany(targetEntity: Usuario::class, mappedBy: 'denunciasRecetas')]
     private Collection $denunciasUsuarios;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $complejidad = null;
+
+    #[ORM\Column]
+    private ?int $numeroPersonas = null;
+
     public function __construct()
     {
         $this->ingredientes = new ArrayCollection();
@@ -350,6 +356,30 @@ class Receta
         if ($this->denunciasUsuarios->removeElement($denunciasUsuario)) {
             $denunciasUsuario->removeDenunciasReceta($this);
         }
+
+        return $this;
+    }
+
+    public function getComplejidad(): ?string
+    {
+        return $this->complejidad;
+    }
+
+    public function setComplejidad(?string $complejidad): static
+    {
+        $this->complejidad = $complejidad;
+
+        return $this;
+    }
+
+    public function getNumeroPersonas(): ?int
+    {
+        return $this->numeroPersonas;
+    }
+
+    public function setNumeroPersonas(int $numeroPersonas): static
+    {
+        $this->numeroPersonas = $numeroPersonas;
 
         return $this;
     }
