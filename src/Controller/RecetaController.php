@@ -2,11 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\Categoria;
+use App\Entity\Imagen;
+use App\Entity\Ingrediente;
+use App\Entity\Paso;
 use App\Entity\Receta;
 use App\Form\RecetaType;
 use App\Repository\RecetaRepository;
-use Categoria;
 use Doctrine\ORM\EntityManagerInterface;
+use Proxies\__CG__\App\Entity\Usuario;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -53,6 +57,17 @@ class RecetaController extends AbstractController
                     'numero' => $paso->getNumero(),
                 ];
             }
+
+            $usuario = [];
+            foreach ($recetas as $receta) {
+                $usuario = [
+                    'id' => $receta->getUsuario()->getId(),
+                    'email' => $receta->getUsuario()->getEmail(),
+                    'nombre' => $receta->getUsuario()->getNombre(),
+                    'nombreUsuario' => $receta->getUsuario()->getNombreUsuario(),
+                ];
+
+            }
     
             $data[] = [
                 'id' => $receta->getId(),
@@ -64,7 +79,7 @@ class RecetaController extends AbstractController
                 'fecha' => $receta->getFecha()->format('Y-m-d'),
                 'imagen' => $imagenes, 
                 'ingrediente' => $ingredientes, 
-                'usuario' => $receta->getUsuario()->getNombreUsuario(),
+                'usuario' => $usuario,
                 'tiempo' => $receta->getTiempo(),
                 'paso' => $pasos
             ];
@@ -76,19 +91,20 @@ class RecetaController extends AbstractController
     #[Route('/search', name: 'buscar_receta', methods: ['GET'])]
     public function getRecetaPorNombre(EntityManagerInterface $entityManager, Request $request): JsonResponse
     {
-    $nombreReceta = $request->query->get('q');
+        $nombreReceta = $request->query->get('q');
         // Obtener las recetas cuyo nombre contiene la palabra pasada como parámetro
         $recetas = $entityManager->getRepository(Receta::class)->createQueryBuilder('receta')
             ->where('LOWER(receta.nombre) LIKE :nombreReceta')
             ->setParameter('nombreReceta', '%' . strtolower($nombreReceta) . '%')
             ->getQuery()
             ->getResult();
-
+    
         // Verificar si se encontraron recetas
         if (empty($recetas)) {
             throw $this->createNotFoundException('No se encontraron recetas con ese nombre');
         }
-
+    
+        $data = [];
         foreach ($recetas as $receta) {
             $categorias = [];
             foreach ($receta->getCategorias() as $categoria) {
@@ -99,7 +115,7 @@ class RecetaController extends AbstractController
             foreach ($receta->getComentarios() as $comentario) {
                 $comentarios[] = $comentario->getDescripcion();
             }
-            
+    
             $imagenes = [];
             foreach ($receta->getImagenes() as $imagen) {
                 $imagenes[] = $imagen->getImagen(); 
@@ -115,6 +131,14 @@ class RecetaController extends AbstractController
                 $pasos[] = $paso->getDescripcion(); 
             }
     
+            // Obtener datos del usuario asociado a la receta actual
+            $usuario = [
+                'id' => $receta->getUsuario()->getId(),
+                'email' => $receta->getUsuario()->getEmail(),
+                'nombre' => $receta->getUsuario()->getNombre(),
+                'nombreUsuario' => $receta->getUsuario()->getNombreUsuario(),
+            ];
+    
             $data[] = [
                 'id' => $receta->getId(),
                 'nombre' => $receta->getNombre(),
@@ -125,13 +149,15 @@ class RecetaController extends AbstractController
                 'fecha' => $receta->getFecha()->format('Y-m-d'),
                 'imagen' => $imagenes, 
                 'ingrediente' => $ingredientes, 
-                'usuario' => $receta->getUsuario()->getNombreUsuario(),
+                'usuario' => $usuario,
                 'tiempo' => $receta->getTiempo(),
                 'paso' => $pasos
             ];
         }
+        
         return $this->json($data);
     }
+    
 
     //Crear nueva receta (para formulario de cliente)
    
@@ -194,6 +220,14 @@ class RecetaController extends AbstractController
                     'numero' => $paso->getNumero(),
                 ];
             }
+
+            
+            $usuario = [
+                'id' => $receta->getUsuario()->getId(),
+                'email' => $receta->getUsuario()->getEmail(),
+                'nombre' => $receta->getUsuario()->getNombre(),
+                'nombreUsuario' => $receta->getUsuario()->getNombreUsuario(),
+            ];
     
             $data = [
                 'id' => $receta->getId(),
@@ -206,7 +240,7 @@ class RecetaController extends AbstractController
                 'fecha' => $receta->getFecha()->format('d-m-Y'),
                 'imagen' => $imagenes, 
                 'ingrediente' => $ingredientes, 
-                'usuario' => $receta->getUsuario()->getNombreUsuario(),
+                'usuario' => $usuario,
                 'tiempo' => $receta->getTiempo(),
                 'numeroPersonas' => $receta->getNumeroPersonas(),
                 'paso' => $pasos
@@ -216,48 +250,89 @@ class RecetaController extends AbstractController
     }
 
     #[Route('/crear', name: 'api_receta_crear', methods: ['POST'])]
-    public function crearReceta(EntityManagerInterface $entityManager, Request $request): JsonResponse
-    {
-        $body = json_decode($request->getContent(), true);
+    public function crearReceta(EntityManagerInterface $entityManager, Request $request): JsonResponse {
+        try {
+            $body = json_decode($request->getContent(), true);
+        
+            // Obtener datos del cuerpo de la solicitud
+            $tiempo = $body['tiempo'];
+            $descripcion = $body['descripcion'];
+            $estado = $body['estado'];
+            $fecha = new \DateTime($body['fecha']); // Assuming the date is passed as a string
+            $nombre = $body['nombre'];
+            $categoriasData = $body['categorias'];
+            $pasosData = $body['pasos'];
+            $imagenesData = $body['imagenes'];
+            $ingredientesData = $body['ingredientes'];
+            $usuarioId = $body['usuario'];
+            $numeroPersonas = $body['numeroPersonas'];
+            $complejidad = $body['complejidad'];
 
-        $tiempo = $body['tiempo'];
-        $descripcion = $body['descripcion'];
-        $estado = $body['estado'];
-        $fecha = $body['fecha'];
-        $nombre = $body['nombre'];
-        $categorias = $body['categorias'];
-        $paso = $body['paso'];
-        $imagen = $body['imagen'];
-        $ingrediente = $body['ingrediente'];
-        $usuario = $body['usuario'];
-        $numeroPersonas = $body['numeroPersonas'];
-        $complejidad = $body['complejidad'];
+            // Encontrar al usuario
+            $usuario = $entityManager->getRepository(Usuario::class)->find($usuarioId);
+            if (!$usuario) {
+                return new JsonResponse(['message' => 'Usuario no encontrado'], Response::HTTP_BAD_REQUEST);
+            }
 
-        // Crear una nueva instancia de usuario
-        $receta = new Receta();
-        $receta->setTiempo($tiempo);
-        $receta->setDescripcion($descripcion);
-        $receta->setEstado($estado);
-        $receta->setFecha($fecha);
-        $receta->setNombre($nombre);
-        $receta->setNumeroPersonas($numeroPersonas);
-        $receta->setComplejidad($complejidad);
+            // Crear una nueva instancia de Receta
+            $receta = new Receta();
+            $receta->setTiempo($tiempo);
+            $receta->setDescripcion($descripcion);
+            $receta->setEstado($estado);
+            $receta->setFecha($fecha);
+            $receta->setNombre($nombre);
+            $receta->setNumeroPersonas($numeroPersonas);
+            $receta->setComplejidad($complejidad);
+            $receta->setUsuario($usuario);
 
+            // Manejar categorías
+            $categoriaRepository = $entityManager->getRepository(Categoria::class);
+            foreach ($categoriasData as $categoriaId) {
+                $categoria = $categoriaRepository->find($categoriaId);
+                if ($categoria) {
+                    $receta->addCategoria($categoria);
+                }
+            }
 
-        // $categoriaRepository = $entityManager->getRepository(Categoria::class);
-        // foreach($categorias as $categoriaData){
-        //     $categoriaId = $categoriaData['id'];
-        //     $categoria = $categoriaRepository->find($categoriaId);
-        //     if ($categoria) {
-        //         $receta->addCategoria($categoria);
-        //     }
-        // }
-    
-        // Guardar el receta en la base de datos
-        $entityManager->persist($receta);
-        $entityManager->flush();
+            // Manejar ingredientes
+            $ingredienteRepository = $entityManager->getRepository(Ingrediente::class);
+            foreach ($ingredientesData as $ingredienteData) {
+                $ingrediente = new Ingrediente();
+                $ingrediente->setNombre($ingredienteData['nombre']);
+                $ingrediente->setCantidad($ingredienteData['cantidad']);
+                $ingrediente->setUnidad($ingredienteData['unidad']);
+                $entityManager->persist($ingrediente);
+                $receta->addIngrediente($ingrediente);
+            }
 
-        return new JsonResponse(['message' => 'receta registrado con éxito'], Response::HTTP_CREATED);
+            // Manejar pasos
+            foreach ($pasosData as $pasoData) {
+                $paso = new Paso();
+                $paso->setNumero($pasoData['numero']);
+                $paso->setDescripcion($pasoData['descripcion']);
+                $paso->setImagen($pasoData['imagen']);
+                $paso->setReceta($receta);
+                $entityManager->persist($paso);
+                $receta->addPaso($paso);
+            }
+
+            // Manejar imágenes
+            foreach ($imagenesData as $imagenData) {
+                $imagen = new Imagen();
+                $imagen->setImagen($imagenData['imagen']);
+                $imagen->setReceta($receta);
+                $entityManager->persist($imagen);
+                $receta->addImagene($imagen);
+            }
+
+            // Persistir la Receta
+            $entityManager->persist($receta);
+            $entityManager->flush();
+
+            return new JsonResponse(['message' => 'Receta registrada con éxito'], Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            // Manejar la excepción
+            return new JsonResponse(['message' => 'Error al procesar la solicitud: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
-
 }

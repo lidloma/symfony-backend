@@ -49,9 +49,7 @@ class UsuarioController extends AbstractController
             ];
         }
 
-      
         
-    
         // Obteniendo las recetas creadas por el usuario
         $recetas = [];
         foreach ($usuario->getRecetas() as $receta) {
@@ -107,6 +105,28 @@ class UsuarioController extends AbstractController
         // Obteniendo usuarios relacionados
         $usuarios = [];
         foreach ($usuario->getUsuarios() as $relatedUsuario) {
+            $recetas = [];
+            foreach ($relatedUsuario->getRecetas() as $receta) {
+                $imagenes = [];
+                foreach ($receta->getImagenes() as $imagen) {
+                    $imagenes[] = [
+                        'id' => $imagen->getId(),
+                        'imagen' => $imagen->getImagen(),
+                    ];
+                }
+                $recetas[] = [
+                    'id' => $receta->getId(),
+                    'nombre' => $receta->getNombre(),
+                    'categorias' => $categorias,
+                    'comentarios' => $comentarios,
+                    'descripcion' => $receta->getDescripcion(),
+                    'estado' => $receta->getEstado(),
+                    'fecha' => $receta->getFecha()->format('d-m-Y'),
+                    'imagen' => $imagenes, 
+                    'usuario' => $usuario,
+                    'tiempo' => $receta->getTiempo(),
+            ];
+        }
             $usuarios[] = [
                 'id' => $relatedUsuario->getId(),
                 'email' => $relatedUsuario->getEmail(),
@@ -116,6 +136,7 @@ class UsuarioController extends AbstractController
                 'provincia' => $relatedUsuario->getProvincia(),
                 'roles' => $relatedUsuario->getRoles(),
                 'imagen' => $relatedUsuario->getImagen(),
+                'recetas' => $recetas
             ];
         }
     
@@ -289,8 +310,8 @@ class UsuarioController extends AbstractController
             foreach ($receta->getComentarios() as $comentario) {
                 $comentarios[] = [
                 'id' => $comentario->getId(),
-                'usuario_id' => $comentario->getUsuario(),
-                'receta_id' => $comentario->getReceta(),
+                'usuario_id' => $comentario->getUsuario()->getId(),
+                'receta_id' => $comentario->getReceta()->getId(),
                 'comentario_id' => $comentario->getComentarios(),
                 'descripcion' => $comentario->getDescripcion(),
                 'puntuacion' => $comentario->getPuntuacion(),
@@ -328,6 +349,14 @@ class UsuarioController extends AbstractController
                     'numero' => $paso->getNumero(),
                 ];
             }
+               
+            $usuario = [
+                'id' => $receta->getUsuario()->getId(),
+                'email' => $receta->getUsuario()->getEmail(),
+                'nombre' => $receta->getUsuario()->getNombre(),
+                'nombreUsuario' => $receta->getUsuario()->getNombreUsuario(),
+                // Agrega aquí más campos según sea necesario
+            ];
     
                 $recetas[] = [
                     'id' => $receta->getId(),
@@ -339,7 +368,7 @@ class UsuarioController extends AbstractController
                     'fecha' => $receta->getFecha()->format('d-m-Y'),
                     'imagen' => $imagenes, 
                     'ingrediente' => $ingredientes, 
-                    'usuario' => $receta->getUsuario()->getNombreUsuario(),
+                    'usuario' => $usuario,
                     'tiempo' => $receta->getTiempo(),
                     'paso' => $pasos
                     ];
