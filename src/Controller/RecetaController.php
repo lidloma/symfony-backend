@@ -23,7 +23,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class RecetaController extends AbstractController
 {
-    //Obtener todas las recetas
+    // Obtener todas las recetas
     #[Route('/', name: 'ver_recetas', methods: ['GET'])]
     public function getRecetas(EntityManagerInterface $entityManager): JsonResponse {
         $recetas = $entityManager->getRepository(Receta::class)->findAll();
@@ -87,7 +87,7 @@ class RecetaController extends AbstractController
         return $this->json($data);
     }  
 
-
+    // Buscador de la página
     #[Route('/search', name: 'buscar_receta', methods: ['GET'])]
     public function getRecetaPorNombre(EntityManagerInterface $entityManager, Request $request): JsonResponse
     {
@@ -137,6 +137,7 @@ class RecetaController extends AbstractController
                 'email' => $receta->getUsuario()->getEmail(),
                 'nombre' => $receta->getUsuario()->getNombre(),
                 'nombreUsuario' => $receta->getUsuario()->getNombreUsuario(),
+                'imagen' => $receta->getUsuario()->getImagen()
             ];
     
             $data[] = [
@@ -159,10 +160,7 @@ class RecetaController extends AbstractController
     }
     
 
-    //Crear nueva receta (para formulario de cliente)
-   
-
-    //Obtener receta por ID IMPORTANTE
+    //Obtener receta por ID 
     #[Route('/{id}', name: 'api_receta_id', methods: ['GET'])]
     public function getReceta(int $id, RecetaRepository $recetaRepository): JsonResponse
     {
@@ -249,16 +247,19 @@ class RecetaController extends AbstractController
         return $this->json($data);
     }
 
+    // Crear una nueva receta
     #[Route('/crear', name: 'api_receta_crear', methods: ['POST'])]
     public function crearReceta(EntityManagerInterface $entityManager, Request $request): JsonResponse {
         try {
             $body = json_decode($request->getContent(), true);
+            error_log(print_r($body, true));
         
+
             // Obtener datos del cuerpo de la solicitud
             $tiempo = $body['tiempo'];
             $descripcion = $body['descripcion'];
             $estado = $body['estado'];
-            $fecha = new \DateTime($body['fecha']); // Assuming the date is passed as a string
+            $fecha = new \DateTime($body['fecha']);
             $nombre = $body['nombre'];
             $categoriasData = $body['categorias'];
             $pasosData = $body['pasos'];
@@ -268,6 +269,7 @@ class RecetaController extends AbstractController
             $numeroPersonas = $body['numeroPersonas'];
             $complejidad = $body['complejidad'];
 
+    
             // Encontrar al usuario
             $usuario = $entityManager->getRepository(Usuario::class)->find($usuarioId);
             if (!$usuario) {
@@ -331,8 +333,53 @@ class RecetaController extends AbstractController
 
             return new JsonResponse(['message' => 'Receta registrada con éxito'], Response::HTTP_CREATED);
         } catch (\Exception $e) {
+
             // Manejar la excepción
             return new JsonResponse(['message' => 'Error al procesar la solicitud: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+    
+    // Eliminar receta por ID
+    #[Route('/delete/{id}', name: 'delete_receta', methods: ['DELETE'])]
+    public function delete(EntityManagerInterface $entityManager, int $id): Response
+    {
+        // Buscar la receta por ID
+        $receta = $entityManager->getRepository(Receta::class)->find($id);
+
+        if (!$receta) {
+            // Si la receta no existe, retornar una respuesta 404
+            return $this->json([
+                'message' => 'Receta no encontrada'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        // Eliminar los pasos asociados
+        foreach ($receta->getPasos() as $paso) {
+            $entityManager->remove($paso);
+        }
+
+        // Eliminar los ingredientes asociados
+        foreach ($receta->getIngredientes() as $ingrediente) {
+            $receta->removeIngrediente($ingrediente);
+        }
+
+        // Eliminar los comentarios asociados
+        foreach ($receta->getComentarios() as $comentario) {
+            $entityManager->remove($comentario);
+        }
+
+        // Eliminar las imágenes asociadas
+        foreach ($receta->getImagenes() as $imagen) {
+            $entityManager->remove($imagen);
+        }
+
+        // Finalmente, eliminar la receta
+        $entityManager->remove($receta);
+        $entityManager->flush();
+
+        // Retornar una respuesta exitosa
+        return $this->json([
+            'message' => 'Receta eliminada exitosamente'
+        ], Response::HTTP_OK);
     }
 }

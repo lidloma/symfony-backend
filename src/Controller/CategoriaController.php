@@ -2,6 +2,8 @@
 
 namespace App\Controller;
 
+use App\Entity\Categoria;
+use App\Entity\Usuario;
 use App\Repository\CategoriaRepository;
 use App\Repository\RecetaRepository;
 use App\Repository\UsuarioRepository;
@@ -40,32 +42,73 @@ class CategoriaController extends AbstractController
         return $this->json($categoriasArray);
     }
 
-    #[Route('/api/actualizar', name: 'app_update_user_categories', methods: ['POST'])]
-    public function updateUserCategories(Request $request, UsuarioRepository $userRepository, CategoriaRepository $categoryRepository, EntityManagerInterface $entityManager): Response
+    // #[Route('/actualizar', name: 'app_update_user_categories', methods: ['POST'])]
+    // public function updateUserCategories(Request $request, UsuarioRepository $userRepository, CategoriaRepository $categoryRepository, EntityManagerInterface $entityManager): Response
+    // {
+    //     $userId = $request->get('usuario_id');
+    
+    //     $categories = $request->get('categoria');
+    
+    //     $user = $userRepository->find($userId);
+    
+    //     if (!$user) {
+    //         throw $this->createNotFoundException('No user found for id '.$userId);
+    //     }
+    
+    //     $user->getCategorias()->clear();
+    
+    //     foreach ($categories as $categoryId) {
+    //         $category = $categoryRepository->find($categoryId);
+    //         if ($category) {
+    //             $user->addCategoria($category);
+    //         }
+    //     }
+    
+    //     $entityManager->persist($user);
+    //     $entityManager->flush();
+    
+    //     return new Response('Updated user categories successfully');
+    // }
+
+    #[Route('/{id}/actualizar', name: 'actualizar_categorias_usuario', methods: ['PUT'])]
+    public function actualizarCategoriasUsuario(Request $request, EntityManagerInterface $entityManager, int $id): Response
     {
-        $userId = $request->get('usuario_id');
-    
-        $categories = $request->get('categoria');
-    
-        $user = $userRepository->find($userId);
-    
-        if (!$user) {
-            throw $this->createNotFoundException('No user found for id '.$userId);
+        // Obtener el usuario
+        $usuario = $entityManager->getRepository(Usuario::class)->find($id);
+
+        if (!$usuario) {
+            // Si el usuario no existe, retornar una respuesta 404
+            return new JsonResponse(['message' => 'Usuario no encontrado'], Response::HTTP_NOT_FOUND);
         }
-    
-        $user->getCategorias()->clear();
-    
-        foreach ($categories as $categoryId) {
-            $category = $categoryRepository->find($categoryId);
-            if ($category) {
-                $user->addCategoria($category);
+
+        // Obtener las categorías enviadas en la solicitud
+        $data = json_decode($request->getContent(), true);
+
+        // Verificar si se enviaron categorías
+        if (!isset($data['categorias'])) {
+            return new JsonResponse(['message' => 'Se requieren categorías para actualizar'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Obtener las categorías seleccionadas por el usuario
+        $categoriasSeleccionadas = $data['categorias'];
+
+        // Limpiar las categorías anteriores del usuario
+        $usuario->getCategorias()->clear();
+
+        // Agregar las nuevas categorías seleccionadas por el usuario
+        foreach ($categoriasSeleccionadas as $categoriaId) {
+            $categoria = $entityManager->getRepository(Categoria::class)->find($categoriaId);
+
+            if ($categoria) {
+                $usuario->addCategoria($categoria);
             }
         }
-    
-        $entityManager->persist($user);
-        $entityManager->flush();
-    
-        return new Response('Updated user categories successfully');
-    }
 
+        // Guardar los cambios en la base de datos
+        $entityManager->flush();
+
+        // Retornar una respuesta exitosa
+        return new JsonResponse(['message' => 'Categorías actualizadas exitosamente'], Response::HTTP_OK);
+    }
 }
+

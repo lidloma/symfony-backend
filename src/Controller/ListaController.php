@@ -7,6 +7,7 @@ use App\Repository\ListaRepository;
 use App\Repository\RecetaRepository;
 use App\Repository\UsuarioRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Proxies\__CG__\App\Entity\Receta;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -134,5 +135,49 @@ class ListaController extends AbstractController
         // Devolver una respuesta con el ID de la lista creada
         return new JsonResponse(['success' => 'Lista created successfully', 'id' => $lista->getId()], Response::HTTP_CREATED);
     }
+
+    // Eliminar una receta dentro de una lista
+    #[Route('/lista/{listaId}/receta/{recetaId}', name: 'eliminar_receta_lista', methods: ['DELETE'])]
+    public function eliminarRecetaDeLista(EntityManagerInterface $entityManager, int $listaId, int $recetaId): Response
+    {
+        $lista = $entityManager->getRepository(Lista::class)->find($listaId);
+        $receta = $entityManager->getRepository(Receta::class)->find($recetaId);
+
+        if (!$lista || !$receta) {
+            // Si la lista o la receta no existen, retornar una respuesta 404
+            return new JsonResponse(['message' => 'Lista o receta no encontrada'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Verificar si la receta está asociada a la lista
+        if (!$lista->getRecetas()->contains($receta)) {
+            return new JsonResponse(['message' => 'La receta no pertenece a la lista'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Remover la receta de la lista
+        $lista->removeReceta($receta);
+        $entityManager->flush();
+
+        return new JsonResponse(['message' => 'Receta eliminada de la lista exitosamente'], Response::HTTP_OK);
+    }
+
+
+    // Eliminar una lista
+    #[Route('/lista/{id}', name: 'eliminar_lista', methods: ['DELETE'])]
+    public function eliminarLista(EntityManagerInterface $entityManager, int $id): Response
+    {
+        $lista = $entityManager->getRepository(Lista::class)->find($id);
+
+        if (!$lista) {
+            // Si la lista no existe, retornar una respuesta 404
+            return new JsonResponse(['message' => 'Lista no encontrada'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Eliminar la lista
+        $entityManager->remove($lista);
+        $entityManager->flush();
+
+        return new JsonResponse(['message' => 'Lista eliminada exitosamente'], Response::HTTP_OK);
+    }
+
 
 }

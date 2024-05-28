@@ -22,9 +22,17 @@ class UsuarioController extends AbstractController
 
     //Obtener a través de las categorías que sigue un usuario todas las recetas de esas categorías
     #[Route('/{id}', name: 'app_usuario_id', methods: ['GET'])]
-    public function getDatosUsuarioId(UsuarioRepository $usuarioRepository, RecetaRepository $recetaRepository, int $id): JsonResponse {
+    public function getDatosUsuarioId(
+        UsuarioRepository $usuarioRepository, 
+        RecetaRepository $recetaRepository, 
+        int $id
+    ): JsonResponse {
         $usuario = $usuarioRepository->find($id);
-    
+
+        if (!$usuario) {
+            return $this->json(['message' => 'Usuario no encontrado'], Response::HTTP_NOT_FOUND);
+        }
+
         // Obteniendo las categorías que sigue el usuario
         $categorias = [];
         foreach ($usuario->getCategorias() as $categoria) {
@@ -32,10 +40,10 @@ class UsuarioController extends AbstractController
                 'id' => $categoria->getId(),
                 'nombre' => $categoria->getNombre(),
                 'estado' => $categoria->getEstado(),
-                'imagen' => $categoria->getImagen(),  // Asegúrate de que este método devuelve la imagen correcta
+                'imagen' => $categoria->getImagen(),
             ];
         }
-    
+
         // Obteniendo los comentarios hechos por el usuario
         $comentarios = [];
         foreach ($usuario->getComentarios() as $comentario) {
@@ -49,7 +57,6 @@ class UsuarioController extends AbstractController
             ];
         }
 
-        
         // Obteniendo las recetas creadas por el usuario
         $recetas = [];
         foreach ($usuario->getRecetas() as $receta) {
@@ -58,38 +65,37 @@ class UsuarioController extends AbstractController
                 $imagenesReceta[] = [
                     'id' => $imagenReceta->getId(),
                     'imagen' => $imagenReceta->getImagen(),
-                    'receta_id' => $imagenReceta->getReceta()->getId(),
                 ];
             }
 
-    $comentariosReceta = [];
-    foreach ($receta->getComentarios() as $comentarioReceta) {
-        $comentariosReceta[] = [
-            'id' => $comentarioReceta->getId(),
-            'descripcion' => $comentarioReceta->getDescripcion(),
-            'puntuacion' => $comentarioReceta->getPuntuacion(),
-            'complejidad' => $comentarioReceta->getComplejidad(),
-            'usuario_id' => $comentarioReceta->getUsuario()->getId(),
-            'receta_id' => $comentarioReceta->getReceta()->getId(),
-        ];
-    }
+            $comentariosReceta = [];
+            foreach ($receta->getComentarios() as $comentarioReceta) {
+                $comentariosReceta[] = [
+                    'id' => $comentarioReceta->getId(),
+                    'descripcion' => $comentarioReceta->getDescripcion(),
+                    'puntuacion' => $comentarioReceta->getPuntuacion(),
+                    'complejidad' => $comentarioReceta->getComplejidad(),
+                    'usuario_id' => $comentarioReceta->getUsuario()->getId(),
+                    'receta_id' => $comentarioReceta->getReceta()->getId(),
+                ];
+            }
 
-    $recetas[] = [
-        'id' => $receta->getId(),
-        'nombre' => $receta->getNombre(),
-        'descripcion' => $receta->getDescripcion(),
-        'estado' => $receta->getEstado(),
-        'fecha' => $receta->getFecha()->format('d-m-Y'),
-        'imagen' => $imagenesReceta,
-        'ingredientes' => $receta->getIngredientes(),
-        'tiempo' => $receta->getTiempo(),
-        'pasos' => $receta->getPasos(),
-        'comentarios' => $comentariosReceta,
-        'numeroPersonas' => $receta->getNumeroPersonas(),
-        'complejidad' => $receta->getComplejidad(),
-    ];
-}
-    
+            $recetas[] = [
+                'id' => $receta->getId(),
+                'nombre' => $receta->getNombre(),
+                'descripcion' => $receta->getDescripcion(),
+                'estado' => $receta->getEstado(),
+                'fecha' => $receta->getFecha()->format('d-m-Y'),
+                'imagen' => $imagenesReceta,
+                'ingredientes' => $receta->getIngredientes()->toArray(),
+                'tiempo' => $receta->getTiempo(),
+                'pasos' => $receta->getPasos()->toArray(),
+                'comentarios' => $comentariosReceta,
+                'numeroPersonas' => $receta->getNumeroPersonas(),
+                'complejidad' => $receta->getComplejidad(),
+            ];
+        }
+
         // Obteniendo las listas del usuario
         $listas = [];
         foreach ($usuario->getListas() as $lista) {
@@ -101,32 +107,10 @@ class UsuarioController extends AbstractController
                 'imagen' => $lista->getImagen(),
             ];
         }
-    
-        // Obteniendo usuarios relacionados
+
+        // Obteniendo usuarios relacionados (esto asume que tienes algún tipo de relación de usuarios, como amigos, seguidores, etc.)
         $usuarios = [];
         foreach ($usuario->getUsuarios() as $relatedUsuario) {
-            $recetas = [];
-            foreach ($relatedUsuario->getRecetas() as $receta) {
-                $imagenes = [];
-                foreach ($receta->getImagenes() as $imagen) {
-                    $imagenes[] = [
-                        'id' => $imagen->getId(),
-                        'imagen' => $imagen->getImagen(),
-                    ];
-                }
-                $recetas[] = [
-                    'id' => $receta->getId(),
-                    'nombre' => $receta->getNombre(),
-                    'categorias' => $categorias,
-                    'comentarios' => $comentarios,
-                    'descripcion' => $receta->getDescripcion(),
-                    'estado' => $receta->getEstado(),
-                    'fecha' => $receta->getFecha()->format('d-m-Y'),
-                    'imagen' => $imagenes, 
-                    'usuario' => $usuario,
-                    'tiempo' => $receta->getTiempo(),
-            ];
-        }
             $usuarios[] = [
                 'id' => $relatedUsuario->getId(),
                 'email' => $relatedUsuario->getEmail(),
@@ -136,10 +120,9 @@ class UsuarioController extends AbstractController
                 'provincia' => $relatedUsuario->getProvincia(),
                 'roles' => $relatedUsuario->getRoles(),
                 'imagen' => $relatedUsuario->getImagen(),
-                'recetas' => $recetas
             ];
         }
-    
+
         // Creando el arreglo final de datos del usuario
         $data = [
             'id' => $usuario->getId(),
@@ -156,9 +139,10 @@ class UsuarioController extends AbstractController
             'listas' => $listas,
             'usuarios' => $usuarios,
         ];
-    
+
         return $this->json($data, Response::HTTP_OK);
     }
+
     
 
     //Loguear al usuario y obtener el token
@@ -378,5 +362,32 @@ class UsuarioController extends AbstractController
 
             return new JsonResponse($recetas, Response::HTTP_OK);
         }
+
+
+    #[Route('/{id}/seguir', name: 'app_usuario_seguir', methods: ['POST'])]
+    public function seguirUsuario(UsuarioRepository $usuarioRepository, EntityManagerInterface $entityManager, int $id, Request $request): JsonResponse
+    {
+        // Obtener el usuario que va a seguir a otro usuario
+        $body = json_decode($request->getContent(), true);
+        $seguidorId = $body['seguidor_id'];
+
+        $usuarioSeguidor = $usuarioRepository->find($seguidorId);
+        $usuarioASeguir = $usuarioRepository->find($id);
+
+        if (!$usuarioSeguidor || !$usuarioASeguir) {
+            return new JsonResponse(['message' => 'Usuario no encontrado'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Agregar el usuario a la lista de usuarios seguidos
+        $usuarioSeguidor->addUsuario($usuarioASeguir);
+
+        // Guardar los cambios en la base de datos
+        $entityManager->persist($usuarioSeguidor);
+        $entityManager->flush();
+
+        return new JsonResponse(['message' => 'Usuario seguido con éxito'], Response::HTTP_OK);
+    }
+
+
 
 }
