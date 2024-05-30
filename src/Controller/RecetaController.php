@@ -23,6 +23,9 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 
 class RecetaController extends AbstractController
 {
+    private function generarImagenUrl($imagen):string{
+        return 'data:image/jpeg;base64,'.base64_encode(stream_get_contents($imagen));
+    }
     // Obtener todas las recetas
     #[Route('/', name: 'ver_recetas', methods: ['GET'])]
     public function getRecetas(EntityManagerInterface $entityManager): JsonResponse {
@@ -137,7 +140,7 @@ class RecetaController extends AbstractController
                 'email' => $receta->getUsuario()->getEmail(),
                 'nombre' => $receta->getUsuario()->getNombre(),
                 'nombreUsuario' => $receta->getUsuario()->getNombreUsuario(),
-                'imagen' => $receta->getUsuario()->getImagen()
+                'imagen' => $this->generarImagenUrl($receta->getUsuario()->getImagen()),
             ];
     
             $data[] = [

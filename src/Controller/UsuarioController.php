@@ -19,6 +19,10 @@ use App\Entity\Categoria;
 #[Route('/api/usuarios')]
 class UsuarioController extends AbstractController
 {
+    
+    private function generarImagenUrl($imagen):string{
+        return 'data:image/jpeg;base64,'.base64_encode(stream_get_contents($imagen));
+    }
 
     //Obtener a través de las categorías que sigue un usuario todas las recetas de esas categorías
     #[Route('/{id}', name: 'app_usuario_id', methods: ['GET'])]
@@ -119,7 +123,8 @@ class UsuarioController extends AbstractController
                 'nombreUsuario' => $relatedUsuario->getNombreUsuario(),
                 'provincia' => $relatedUsuario->getProvincia(),
                 'roles' => $relatedUsuario->getRoles(),
-                'imagen' => $relatedUsuario->getImagen(),
+                'imagen' => $this->generarImagenUrl($relatedUsuario->getImagen()),
+
             ];
         }
 
@@ -132,7 +137,7 @@ class UsuarioController extends AbstractController
             'nombreUsuario' => $usuario->getNombreUsuario(),
             'provincia' => $usuario->getProvincia(),
             'roles' => $usuario->getRoles(),
-            'imagen' => $usuario->getImagen(),
+            'imagen' => $this->generarImagenUrl($usuario->getImagen()),
             'categorias' => $categorias,
             'comentarios' => $comentarios,
             'recetas' => $recetas,
@@ -262,7 +267,7 @@ class UsuarioController extends AbstractController
                     'nombreUsuario' => $usuario->getNombreUsuario(),
                     'provincia' => $usuario->getProvincia(),
                     'roles' => $usuario->getRoles(),
-                    'imagen' => $usuario->getImagen(),
+                    'imagen' => $this->generarImagenUrl($usuario->getImagen()),
                 ];
             }
     

@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Entity;
-
+use Doctrine\DBAL\Types\Types;
 use App\Repository\UsuarioRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -44,8 +44,8 @@ class Usuario implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $nombreUsuario = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $imagen = null;
+    #[ORM\Column(type: Types::BLOB, nullable:true)]
+    private $imagen = null;
 
     /**
      * @var Collection<int, Comentario>
@@ -217,12 +217,12 @@ class Usuario implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getImagen(): ?string
+    public function getImagen()
     {
         return $this->imagen;
     }
 
-    public function setImagen(string $imagen): static
+    public function setImagen($imagen): static
     {
         $this->imagen = $imagen;
 
@@ -439,4 +439,11 @@ class Usuario implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+
+
 }
+
+
+
+// #[ORM\Column(type: Types::BLOB, nullable:true)]
+// private $imagen = null;

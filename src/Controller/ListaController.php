@@ -137,7 +137,7 @@ class ListaController extends AbstractController
     }
 
     // Eliminar una receta dentro de una lista
-    #[Route('/lista/{listaId}/receta/{recetaId}', name: 'eliminar_receta_lista', methods: ['DELETE'])]
+    #[Route('/{listaId}/receta/{recetaId}', name: 'eliminar_receta_lista', methods: ['DELETE'])]
     public function eliminarRecetaDeLista(EntityManagerInterface $entityManager, int $listaId, int $recetaId): Response
     {
         $lista = $entityManager->getRepository(Lista::class)->find($listaId);
@@ -160,9 +160,8 @@ class ListaController extends AbstractController
         return new JsonResponse(['message' => 'Receta eliminada de la lista exitosamente'], Response::HTTP_OK);
     }
 
-
     // Eliminar una lista
-    #[Route('/lista/{id}', name: 'eliminar_lista', methods: ['DELETE'])]
+    #[Route('/{id}', name: 'eliminar_lista', methods: ['DELETE'])]
     public function eliminarLista(EntityManagerInterface $entityManager, int $id): Response
     {
         $lista = $entityManager->getRepository(Lista::class)->find($id);
