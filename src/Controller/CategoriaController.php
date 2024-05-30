@@ -24,6 +24,10 @@ class CategoriaController extends AbstractController
         $this->categoriaRepository = $categoriaRepository;
     }
 
+    private function generarImagenUrl($imagen):string{
+        return 'data:image/jpeg;base64,'.base64_encode(stream_get_contents($imagen));
+    }
+
     #[Route('/', name: 'app_categorias')]
     public function getCategorias(): JsonResponse
     {
@@ -35,7 +39,7 @@ class CategoriaController extends AbstractController
                 'id' => $categoria->getId(),
                 'nombre' => $categoria->getNombre(),
                 'estado' => $categoria->getEstado(),
-                'imagen' => $categoria->getImagen(),
+                'imagen' => $this->generarImagenUrl($categoria->getImagen()),
             ];
         }
 

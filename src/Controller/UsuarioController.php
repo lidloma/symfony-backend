@@ -44,7 +44,7 @@ class UsuarioController extends AbstractController
                 'id' => $categoria->getId(),
                 'nombre' => $categoria->getNombre(),
                 'estado' => $categoria->getEstado(),
-                'imagen' => $categoria->getImagen(),
+                'imagen' =>  $this->generarImagenUrl($categoria->getImagen()),
             ];
         }
 
@@ -68,7 +68,7 @@ class UsuarioController extends AbstractController
             foreach ($receta->getImagenes() as $imagenReceta) {
                 $imagenesReceta[] = [
                     'id' => $imagenReceta->getId(),
-                    'imagen' => $imagenReceta->getImagen(),
+                    'imagen' => $this->generarImagenUrl($imagenReceta->getImagen())
                 ];
             }
 
@@ -108,7 +108,7 @@ class UsuarioController extends AbstractController
                 'usuario_id' => $lista->getUsuario()->getId(),
                 'nombre' => $lista->getNombre(),
                 'descripcion' => $lista->getDescripcion(),
-                'imagen' => $lista->getImagen(),
+                'imagen' =>  $this->generarImagenUrl($lista->getImagen()),
             ];
         }
 
@@ -246,7 +246,7 @@ class UsuarioController extends AbstractController
                 'nombreUsuario' => $usuario->getNombreUsuario(),
                 'provincia' => $usuario->getProvincia(),
                 'roles' => $usuario->getRoles(),
-                'imagen' => $usuario->getImagen(),
+                'imagen' =>  $this->generarImagenUrl($usuario->getImagen()),
             ];
 
             return new JsonResponse($data, Response::HTTP_OK);
@@ -290,7 +290,7 @@ class UsuarioController extends AbstractController
                     'id' => $categoria->getId(),
                     'nombre' => $categoria->getNombre(),
                     'estado' => $categoria->getEstado(),
-                    'imagen' => $categoria->getImagen(),
+                    'imagen' =>  $this->generarImagenUrl($categoria->getImagen()),
 
                 ];
             }
@@ -314,7 +314,7 @@ class UsuarioController extends AbstractController
                 $imagenes[] = [
                 'id' => $imagen->getId(),
                 'receta_id' => $imagen->getReceta(),
-                'imagen' => $imagen->getImagen(),
+                'imagen' => $this->generarImagenUrl($imagen->getImagen())
                 
             ]; 
             }
@@ -334,7 +334,7 @@ class UsuarioController extends AbstractController
                 $pasos[] = [
                     'id' => $paso->getId(),
                     'descripcion' => $paso->getDescripcion(),
-                    'imagen' => $paso->getImagen(),
+                    'imagen' =>  $this->generarImagenUrl($paso->getImagen()),
                     'numero' => $paso->getNumero(),
                 ];
             }
@@ -344,7 +344,7 @@ class UsuarioController extends AbstractController
                 'email' => $receta->getUsuario()->getEmail(),
                 'nombre' => $receta->getUsuario()->getNombre(),
                 'nombreUsuario' => $receta->getUsuario()->getNombreUsuario(),
-                // Agrega aquí más campos según sea necesario
+                'imagen' => $this->generarImagenUrl($receta->getUsuario()->getImagen())
             ];
     
                 $recetas[] = [
@@ -359,7 +359,9 @@ class UsuarioController extends AbstractController
                     'ingrediente' => $ingredientes, 
                     'usuario' => $usuario,
                     'tiempo' => $receta->getTiempo(),
-                    'paso' => $pasos
+                    'paso' => $pasos,
+                    'numeroPersonas'=> $receta->getNumeroPersonas(),
+                    'complejidad' => $receta->getComplejidad()
                     ];
             }
         }
@@ -394,5 +396,46 @@ class UsuarioController extends AbstractController
     }
 
 
+    #[Route('/{id}', name: 'app_actualizar_usuario', methods: ['PUT'])]
+    public function actualizarUsuario(int $id, Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): JsonResponse
+    {
+        $usuario = $entityManager->getRepository(Usuario::class)->find($id);
 
+        if (!$usuario) {
+            return new JsonResponse(['message' => 'Usuario no encontrado'], Response::HTTP_NOT_FOUND);
+        }
+
+        $body = json_decode($request->getContent(), true);
+
+        if (isset($body['email'])) {
+            $usuario->setEmail($body['email']);
+        }
+        if (isset($body['nombre'])) {
+            $usuario->setNombre($body['nombre']);
+        }
+        if (isset($body['apellidos'])) {
+            $usuario->setApellidos($body['apellidos']);
+        }
+        if (isset($body['nombreUsuario'])) {
+            $usuario->setNombreUsuario($body['nombreUsuario']);
+        }
+        if (isset($body['provincia'])) {
+            $usuario->setProvincia($body['provincia']);
+        }
+        if (isset($body['imagen'])) {
+            $imagenBase64 = base64_decode($body['imagen']);
+            $usuario->setImagen($imagenBase64);
+        }
+
+        if (isset($body['contrasenia'])) {
+            $usuario->setPassword($passwordHasher->hashPassword($usuario, $body['contrasenia']));
+        }
+
+        
+        $entityManager->flush();
+
+        return new JsonResponse(['message' => 'Usuario actualizado con éxito'], Response::HTTP_OK);
+    }
 }
+
+

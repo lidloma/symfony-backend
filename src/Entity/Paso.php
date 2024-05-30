@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\PasoRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\DBAL\Types\Types;
+
 
 #[ORM\Entity(repositoryClass: PasoRepository::class)]
 class Paso
@@ -19,8 +21,8 @@ class Paso
     #[ORM\Column(length: 255)]
     private ?string $descripcion = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $imagen = null;
+    #[ORM\Column(type: Types::BLOB, nullable:true)]
+    private $imagen = null;
 
     #[ORM\ManyToOne(inversedBy: 'pasos')]
     #[ORM\JoinColumn(nullable: false)]
@@ -55,12 +57,12 @@ class Paso
         return $this;
     }
 
-    public function getImagen(): ?string
+    public function getImagen()
     {
         return $this->imagen;
     }
 
-    public function setImagen(string $imagen): static
+    public function setImagen($imagen): static
     {
         $this->imagen = $imagen;
 

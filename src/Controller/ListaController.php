@@ -17,6 +17,10 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/api/lista')]
 class ListaController extends AbstractController
 {
+    private function generarImagenUrl($imagen):string{
+        return 'data:image/jpeg;base64,'.base64_encode(stream_get_contents($imagen));
+    }
+    
     #[Route('/{id}', name: 'app_lista', methods: ['GET'])]
     public function getListasUsuario(UsuarioRepository $usuarioRepository, RecetaRepository $recetaRepository, int $id): JsonResponse
     {
@@ -33,7 +37,7 @@ class ListaController extends AbstractController
                 foreach ($receta->getImagenes() as $imagen) {
                     $imagenes[] = [
                         'id' => $imagen->getId(),
-                        'imagen' => $imagen->getImagen(),
+                        'imagen' =>  $this->generarImagenUrl($imagen->getImagen()),
                     ];
                 }
                 $recetas[] = [

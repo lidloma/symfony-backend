@@ -6,6 +6,8 @@ use App\Repository\CategoriaRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\DBAL\Types\Types;
+
 
 #[ORM\Entity(repositoryClass: CategoriaRepository::class)]
 class Categoria
@@ -33,8 +35,8 @@ class Categoria
     #[ORM\ManyToMany(targetEntity: Receta::class, mappedBy: 'categorias')]
     private Collection $recetas;
 
-    #[ORM\Column(length: 255)]
-    private ?string $imagen = null;
+    #[ORM\Column(type: Types::BLOB, nullable:true)]
+    private $imagen = null;
 
     public function __construct()
     {
@@ -125,12 +127,12 @@ class Categoria
         return $this;
     }
 
-    public function getImagen(): ?string
+    public function getImagen()
     {
         return $this->imagen;
     }
 
-    public function setImagen(string $imagen): static
+    public function setImagen($imagen): static
     {
         $this->imagen = $imagen;
 

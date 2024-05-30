@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\ImagenRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\DBAL\Types\Types;
+
 
 #[ORM\Entity(repositoryClass: ImagenRepository::class)]
 class Imagen
@@ -13,8 +15,8 @@ class Imagen
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $imagen = null;
+    #[ORM\Column(type: Types::BLOB, nullable:true)]
+    private $imagen = null;
 
     #[ORM\ManyToOne(inversedBy: 'imagenes')]
     #[ORM\JoinColumn(nullable: false)]
@@ -25,12 +27,12 @@ class Imagen
         return $this->id;
     }
 
-    public function getImagen(): ?string
+    public function getImagen()
     {
         return $this->imagen;
     }
 
-    public function setImagen(string $imagen): static
+    public function setImagen($imagen): static
     {
         $this->imagen = $imagen;
 

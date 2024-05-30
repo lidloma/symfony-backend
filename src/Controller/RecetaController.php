@@ -43,7 +43,8 @@ class RecetaController extends AbstractController
             
             $imagenes = [];
             foreach ($receta->getImagenes() as $imagen) {
-                $imagenes[] = $imagen->getImagen(); 
+                $imagenes[] = $this->generarImagenUrl($imagen->getImagen()); 
+
             }
     
             $ingredientes = [];
@@ -56,7 +57,7 @@ class RecetaController extends AbstractController
                 $pasos[] = [
                     'id' => $paso->getId(),
                     'descripcion' => $paso->getDescripcion(),
-                    'imagen' => $paso->getImagen(),
+                    'imagen' =>  $this->generarImagenUrl($paso->getImagen()),
                     'numero' => $paso->getNumero(),
                 ];
             }
@@ -121,7 +122,7 @@ class RecetaController extends AbstractController
     
             $imagenes = [];
             foreach ($receta->getImagenes() as $imagen) {
-                $imagenes[] = $imagen->getImagen(); 
+                $imagenes[] = $this->generarImagenUrl($imagen->getImagen()); 
             }
     
             $ingredientes = [];
@@ -197,7 +198,8 @@ class RecetaController extends AbstractController
                 $imagenes[] = [
                 'id' => $imagen->getId(),
                 'receta_id' => $imagen->getReceta(),
-                'imagen' => $imagen->getImagen(),
+                'imagen' => $this->generarImagenUrl($imagen->getImagen())
+
                 
             ]; 
             }
@@ -217,7 +219,7 @@ class RecetaController extends AbstractController
                 $pasos[] = [
                     'id' => $paso->getId(),
                     'descripcion' => $paso->getDescripcion(),
-                    'imagen' => $paso->getImagen(),
+                    'imagen' =>  $this->generarImagenUrl($paso->getImagen()),
                     'numero' => $paso->getNumero(),
                 ];
             }

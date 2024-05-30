@@ -6,6 +6,8 @@ use App\Repository\ListaRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\DBAL\Types\Types;
+
 
 #[ORM\Entity(repositoryClass: ListaRepository::class)]
 class Lista
@@ -21,8 +23,8 @@ class Lista
     #[ORM\Column(length: 255)]
     private ?string $descripcion = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $imagen = null;
+    #[ORM\Column(type: Types::BLOB, nullable:true)]
+    private $imagen = null;
 
     #[ORM\ManyToOne(inversedBy: 'listas')]
     private ?Usuario $usuario = null;
@@ -67,12 +69,12 @@ class Lista
         return $this;
     }
 
-    public function getImagen(): ?string
+    public function getImagen()
     {
         return $this->imagen;
     }
 
-    public function setImagen(string $imagen): static
+    public function setImagen($imagen): static
     {
         $this->imagen = $imagen;
 
