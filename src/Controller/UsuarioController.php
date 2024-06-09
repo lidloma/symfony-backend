@@ -37,18 +37,18 @@ class UsuarioController extends AbstractController
             return $this->json(['message' => 'Usuario no encontrado'], Response::HTTP_NOT_FOUND);
         }
 
-        // Obteniendo las categorías que sigue el usuario
+        // Obtener las categorías que sigue el usuario
         $categorias = [];
         foreach ($usuario->getCategorias() as $categoria) {
             $categorias[] = [
                 'id' => $categoria->getId(),
                 'nombre' => $categoria->getNombre(),
                 'estado' => $categoria->getEstado(),
-                'imagen' =>  $this->generarImagenUrl($categoria->getImagen()),
+                'imagen' => $this->generarImagenUrl($categoria->getImagen()),
             ];
         }
 
-        // Obteniendo los comentarios hechos por el usuario
+        // Obtener los comentarios hechos por el usuario
         $comentarios = [];
         foreach ($usuario->getComentarios() as $comentario) {
             $comentarios[] = [
@@ -61,7 +61,7 @@ class UsuarioController extends AbstractController
             ];
         }
 
-        // Obteniendo las recetas creadas por el usuario
+        // Obtener las recetas creadas por el usuario
         $recetas = [];
         foreach ($usuario->getRecetas() as $receta) {
             $imagenesReceta = [];
@@ -97,10 +97,13 @@ class UsuarioController extends AbstractController
                 'comentarios' => $comentariosReceta,
                 'numeroPersonas' => $receta->getNumeroPersonas(),
                 'complejidad' => $receta->getComplejidad(),
+                'puntuacion' => $receta->getPuntuacion(),
+
+
             ];
         }
 
-        // Obteniendo las listas del usuario
+        // Obtener las listas del usuario
         $listas = [];
         foreach ($usuario->getListas() as $lista) {
             $listas[] = [
@@ -108,13 +111,73 @@ class UsuarioController extends AbstractController
                 'usuario_id' => $lista->getUsuario()->getId(),
                 'nombre' => $lista->getNombre(),
                 'descripcion' => $lista->getDescripcion(),
-                'imagen' =>  $this->generarImagenUrl($lista->getImagen()),
+                'imagen' => $this->generarImagenUrl($lista->getImagen()),
             ];
         }
 
-        // Obteniendo usuarios relacionados (esto asume que tienes algún tipo de relación de usuarios, como amigos, seguidores, etc.)
+        // Obtener los usuarios que el usuario sigue y sus recetas
         $usuarios = [];
         foreach ($usuario->getUsuarios() as $relatedUsuario) {
+            // Obtener recetas de los usuarios seguidos
+            $recetasUsuarioSeguidos = [];
+            foreach ($relatedUsuario->getRecetas() as $receta) {
+                $imagenesReceta = [];
+                foreach ($receta->getImagenes() as $imagenReceta) {
+                    $imagenesReceta[] = [
+                        'id' => $imagenReceta->getId(),
+                        'imagen' => $this->generarImagenUrl($imagenReceta->getImagen())
+                    ];
+                }
+
+                $comentariosReceta = [];
+                foreach ($receta->getComentarios() as $comentarioReceta) {
+                    $comentariosReceta[] = [
+                        'id' => $comentarioReceta->getId(),
+                        'descripcion' => $comentarioReceta->getDescripcion(),
+                        'puntuacion' => $comentarioReceta->getPuntuacion(),
+                        'complejidad' => $comentarioReceta->getComplejidad(),
+                        'usuario_id' => $comentarioReceta->getUsuario()->getId(),
+                        'receta_id' => $comentarioReceta->getReceta()->getId(),
+                    ];
+                }
+
+                $categoriasReceta = [];
+                foreach ($receta->getCategorias() as $categoriaReceta) {
+                    $categoriasReceta[] = [
+                        'id' => $categoriaReceta->getId(),
+                        'nombre' => $categoriaReceta->getNombre(),
+                        'estado' => $categoriaReceta->getEstado(),
+                        'imagen' => $this->generarImagenUrl($categoriaReceta->getImagen()),
+                    ];
+                }
+
+                $usuariosReceta = [
+                    'id' => $receta->getUsuario()->getId(),
+                    'email' => $receta->getUsuario()->getEmail(),
+                    'nombre' => $receta->getUsuario()->getNombre(),
+                    'nombreUsuario' => $receta->getUsuario()->getNombreUsuario(),
+                    'imagen' => $this->generarImagenUrl($receta->getUsuario()->getImagen()),
+                ];
+
+                $recetasUsuarioSeguidos[] = [
+                    'id' => $receta->getId(),
+                    'nombre' => $receta->getNombre(),
+                    'descripcion' => $receta->getDescripcion(),
+                    'estado' => $receta->getEstado(),
+                    'fecha' => $receta->getFecha()->format('d-m-Y'),
+                    'imagen' => $imagenesReceta,
+                    'ingredientes' => $receta->getIngredientes()->toArray(),
+                    'tiempo' => $receta->getTiempo(),
+                    'pasos' => $receta->getPasos()->toArray(),
+                    'comentarios' => $comentariosReceta,
+                    'numeroPersonas' => $receta->getNumeroPersonas(),
+                    'complejidad' => $receta->getComplejidad(),
+                    'categorias' => $categoriasReceta,
+                    'usuario' => $usuariosReceta,
+                    'puntuacion' => $receta->getPuntuacion(),
+                ];
+            }
+
             $usuarios[] = [
                 'id' => $relatedUsuario->getId(),
                 'email' => $relatedUsuario->getEmail(),
@@ -124,11 +187,11 @@ class UsuarioController extends AbstractController
                 'provincia' => $relatedUsuario->getProvincia(),
                 'roles' => $relatedUsuario->getRoles(),
                 'imagen' => $this->generarImagenUrl($relatedUsuario->getImagen()),
-
+                'recetas' => $recetasUsuarioSeguidos,
             ];
         }
 
-        // Creando el arreglo final de datos del usuario
+        // Crear el arreglo final de datos del usuario
         $data = [
             'id' => $usuario->getId(),
             'email' => $usuario->getEmail(),
@@ -143,6 +206,7 @@ class UsuarioController extends AbstractController
             'recetas' => $recetas,
             'listas' => $listas,
             'usuarios' => $usuarios,
+            
         ];
 
         return $this->json($data, Response::HTTP_OK);
@@ -185,7 +249,7 @@ class UsuarioController extends AbstractController
         $contrasenia = $body['contrasenia'];
         $provincia = $body['provincia'];
         $roles = $body['roles'];
-        $imagen = $body['imagen'];
+        $imagenData = base64_decode($body['imagen']);
         $categorias = $body['categorias'];
 
         // Crear una nueva instancia de usuario
@@ -196,7 +260,8 @@ class UsuarioController extends AbstractController
         $usuario->setNombreUsuario($nombreUsuario);
         $usuario->setProvincia($provincia);
         $usuario->setRoles($roles);
-        $usuario->setImagen($imagen);
+        $usuario->setImagen($imagenData);
+        
         $categoriaRepository = $entityManager->getRepository(Categoria::class);
         foreach($categorias as $categoriaData){
             $categoriaId = $categoriaData['id'];
@@ -223,9 +288,7 @@ class UsuarioController extends AbstractController
     {
 
         $body = json_decode($request->getContent(), true);
-    
             $email = $body['email'];
-    
             if (!$email)
             {
                 return new JsonResponse(['message' => 'Email no encontrado'], Response::HTTP_NOT_FOUND);
@@ -361,7 +424,8 @@ class UsuarioController extends AbstractController
                     'tiempo' => $receta->getTiempo(),
                     'paso' => $pasos,
                     'numeroPersonas'=> $receta->getNumeroPersonas(),
-                    'complejidad' => $receta->getComplejidad()
+                    'complejidad' => $receta->getComplejidad(),
+                    'puntuacion' => $receta->getPuntuacion()
                     ];
             }
         }
@@ -394,8 +458,6 @@ class UsuarioController extends AbstractController
 
         return new JsonResponse(['message' => 'Usuario seguido con éxito'], Response::HTTP_OK);
     }
-
-
     #[Route('/{id}', name: 'app_actualizar_usuario', methods: ['PUT'])]
     public function actualizarUsuario(int $id, Request $request, EntityManagerInterface $entityManager, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
@@ -422,20 +484,70 @@ class UsuarioController extends AbstractController
         if (isset($body['provincia'])) {
             $usuario->setProvincia($body['provincia']);
         }
+
         if (isset($body['imagen'])) {
-            $imagenBase64 = base64_decode($body['imagen']);
-            $usuario->setImagen($imagenBase64);
+            $imagenData = base64_decode($body['imagen']);
+            $usuario->setImagen($imagenData);
         }
 
         if (isset($body['contrasenia'])) {
             $usuario->setPassword($passwordHasher->hashPassword($usuario, $body['contrasenia']));
         }
 
+        $entityManager->persist($usuario);
+        $entityManager->flush();
         
+        return new JsonResponse(['message' => 'Usuario actualizado con éxito']);
+    }
+
+    #[Route('/comprobar-si-sigue', name: 'comprobar_si_sigue', methods: ['POST'])]
+    public function comprobarSiSigue(Request $request, UsuarioRepository $usuarioRepository): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $usuarioId = $data['usuario_id'] ?? null;
+        $seguidorId = $data['seguidor_id'] ?? null;
+
+        if (!$usuarioId || !$seguidorId) {
+            return new JsonResponse(['message' => 'Parámetros inválidos'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $usuario = $usuarioRepository->find($usuarioId);
+        $seguidor = $usuarioRepository->find($seguidorId);
+
+        if (!$usuario || !$seguidor) {
+            return new JsonResponse(['message' => 'Usuario no encontrado'], Response::HTTP_NOT_FOUND);
+        }
+
+        $sigue = $seguidor->getUsuarios()->contains($usuario);
+
+        return new JsonResponse(['sigue' => $sigue ? 'Sí' : 'No'], Response::HTTP_OK);
+    }
+
+    #[Route('/dejar-de-seguir', name: 'dejar_de_seguir', methods: ['POST'])]
+    public function dejarDeSeguir(Request $request, UsuarioRepository $usuarioRepository, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+        $usuarioId = $data['usuario_id'] ?? null;
+        $seguidorId = $data['seguidor_id'] ?? null;
+
+        if (!$usuarioId || !$seguidorId) {
+            return new JsonResponse(['message' => 'Parámetros inválidos'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $usuario = $usuarioRepository->find($usuarioId);
+        $seguidor = $usuarioRepository->find($seguidorId);
+
+        if (!$usuario || !$seguidor) {
+            return new JsonResponse(['message' => 'Usuario no encontrado'], Response::HTTP_NOT_FOUND);
+        }
+
+        $seguidor->removeUsuario($usuario);
+
+        $entityManager->persist($seguidor);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Usuario actualizado con éxito'], Response::HTTP_OK);
+        return new JsonResponse(['message' => 'Usuario dejado de seguir con éxito'], Response::HTTP_OK);
     }
-}
 
+}
 

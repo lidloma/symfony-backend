@@ -25,6 +25,7 @@ class RecetaRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+
     public function findRecetasByIngredientes(array $ingredientes): array
     {
         $qb = $this->createQueryBuilder('r');
@@ -38,32 +39,14 @@ class RecetaRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
-
-    //    /**
-    //     * @return Receta[] Returns an array of Receta objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('r')
-    //            ->andWhere('r.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('r.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?Receta
-    //    {
-    //        return $this->createQueryBuilder('r')
-    //            ->andWhere('r.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
-
+    
+    public function findAllOrderedByFechaDesc()
+    {
+        return $this->createQueryBuilder('r')
+            ->orderBy('r.fecha', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 
     
 }

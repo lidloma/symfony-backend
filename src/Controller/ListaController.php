@@ -51,7 +51,7 @@ class ListaController extends AbstractController
                 'id' => $lista->getId(),
                 'nombre' => $lista->getNombre(),
                 'recetas' => $recetas,
-                'imagen' => $imagenes // ¿Es necesario tener esto aquí?
+                'imagen' => $this->generarImagenUrl($lista->getImagen())
             ];
         }
 
@@ -98,45 +98,46 @@ class ListaController extends AbstractController
     #[Route('/crear', name: 'crear_lista', methods: ['POST'])]
     public function crearLista(Request $request, UsuarioRepository $usuarioRepository, EntityManagerInterface $entityManager): JsonResponse
     {
-        // Decodificar el cuerpo de la solicitud JSON
+        // Decode the JSON request body
         $data = json_decode($request->getContent(), true);
 
-        // Verificar si el cuerpo de la solicitud está vacío o es inválido
+        // Verify if the request body is empty or invalid
         if (!$data) {
             return new JsonResponse(['error' => 'Invalid JSON'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Obtener los datos del cuerpo de la solicitud
-        $usuarioId = $data['usuario_id'] ?? null;
-        $nombre = $data['nombre'] ?? null;
-        $descripcion = $data['descripcion'] ?? null;
-        $imagen = $data['imagen'] ?? null;
+        // Get the data from the request body
+        $usuarioId = $data['usuario_id'];
+        $nombre = $data['nombre'];
+        $descripcion = $data['descripcion'];
 
-        // Verificar si faltan campos obligatorios
-        if (!$usuarioId || !$nombre || !$descripcion || !$imagen) {
+        if (!$usuarioId || !$nombre || !$descripcion) {
             return new JsonResponse(['error' => 'Missing required fields'], Response::HTTP_BAD_REQUEST);
         }
 
-        // Obtener el usuario por ID
         $usuario = $usuarioRepository->find($usuarioId);
 
-        // Verificar si el usuario existe
         if (!$usuario) {
             return new JsonResponse(['error' => 'User not found'], Response::HTTP_NOT_FOUND);
         }
 
-        // Crear una nueva lista
+        
+
+        // Create a new lista
         $lista = new Lista();
         $lista->setUsuario($usuario);
         $lista->setNombre($nombre);
         $lista->setDescripcion($descripcion);
-        $lista->setImagen($imagen);
+        if (isset($data['imagen'])) {
+            $imagenData = base64_decode($data['imagen']);
+            $lista->setImagen($imagenData);
+        }
 
-        // Persistir la lista en la base de datos
+        // Persist the lista in the database
         $entityManager->persist($lista);
         $entityManager->flush();
 
-        // Devolver una respuesta con el ID de la lista creada
+        // Return a response with the ID of the created lista
         return new JsonResponse(['success' => 'Lista created successfully', 'id' => $lista->getId()], Response::HTTP_CREATED);
     }
 
@@ -180,6 +181,42 @@ class ListaController extends AbstractController
         $entityManager->flush();
 
         return new JsonResponse(['message' => 'Lista eliminada exitosamente'], Response::HTTP_OK);
+    }
+
+    #[Route('/{id}/edit', name: 'editar_lista', methods: ['PUT'])]
+    public function editarLista(Request $request, int $id, ListaRepository $listaRepository, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $lista = $listaRepository->find($id);
+        if (!$lista) {
+            return new JsonResponse(['error' => 'Lista not found'], JsonResponse::HTTP_NOT_FOUND);
+        }
+
+        $data = json_decode($request->getContent(), true);
+
+        if (!$data) {
+            return new JsonResponse(['error' => 'Invalid JSON'], JsonResponse::HTTP_BAD_REQUEST);
+        }
+
+        $nombre = $data['nombre'] ?? null;
+        $descripcion = $data['descripcion'] ?? null;
+
+        if ($nombre) {
+            $lista->setNombre($nombre);
+        }
+
+        if ($descripcion) {
+            $lista->setDescripcion($descripcion);
+        }
+
+        if (isset($data['imagen'])) {
+            $imagenData = base64_decode($data['imagen']);
+            $lista->setImagen($imagenData);
+        }
+
+        $entityManager->persist($lista);
+        $entityManager->flush();
+
+        return new JsonResponse(['success' => 'Lista updated successfully'], JsonResponse::HTTP_OK);
     }
 
 

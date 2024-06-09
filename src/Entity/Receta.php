@@ -71,17 +71,20 @@ class Receta
     #[ORM\Column(length: 255)]
     private ?string $nombre = null;
 
-    /**
-     * @var Collection<int, Usuario>
-     */
-    #[ORM\ManyToMany(targetEntity: Usuario::class, mappedBy: 'denunciasRecetas')]
-    private Collection $denunciasUsuarios;
-
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $complejidad = null;
 
     #[ORM\Column]
     private ?int $numeroPersonas = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $puntuacion = null;
+
+    /**
+     * @var Collection<int, Denuncia>
+     */
+    #[ORM\OneToMany(targetEntity: Denuncia::class, mappedBy: 'receta')]
+    private Collection $denuncia_id;
 
     public function __construct()
     {
@@ -91,7 +94,7 @@ class Receta
         $this->imagenes = new ArrayCollection();
         $this->categorias = new ArrayCollection();
         $this->comentarios = new ArrayCollection();
-        $this->denunciasUsuarios = new ArrayCollection();
+        $this->denuncia_id = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -333,33 +336,6 @@ class Receta
         return $this;
     }
 
-    /**
-     * @return Collection<int, Usuario>
-     */
-    public function getDenunciasUsuarios(): Collection
-    {
-        return $this->denunciasUsuarios;
-    }
-
-    public function addDenunciasUsuario(Usuario $denunciasUsuario): static
-    {
-        if (!$this->denunciasUsuarios->contains($denunciasUsuario)) {
-            $this->denunciasUsuarios->add($denunciasUsuario);
-            $denunciasUsuario->addDenunciasReceta($this);
-        }
-
-        return $this;
-    }
-
-    public function removeDenunciasUsuario(Usuario $denunciasUsuario): static
-    {
-        if ($this->denunciasUsuarios->removeElement($denunciasUsuario)) {
-            $denunciasUsuario->removeDenunciasReceta($this);
-        }
-
-        return $this;
-    }
-
     public function getComplejidad(): ?string
     {
         return $this->complejidad;
@@ -380,6 +356,48 @@ class Receta
     public function setNumeroPersonas(int $numeroPersonas): static
     {
         $this->numeroPersonas = $numeroPersonas;
+
+        return $this;
+    }
+
+    public function getPuntuacion(): ?int
+    {
+        return $this->puntuacion;
+    }
+
+    public function setPuntuacion(?int $puntuacion): static
+    {
+        $this->puntuacion = $puntuacion;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Denuncia>
+     */
+    public function getDenunciaId(): Collection
+    {
+        return $this->denuncia_id;
+    }
+
+    public function addDenunciaId(Denuncia $denunciaId): static
+    {
+        if (!$this->denuncia_id->contains($denunciaId)) {
+            $this->denuncia_id->add($denunciaId);
+            $denunciaId->setReceta($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDenunciaId(Denuncia $denunciaId): static
+    {
+        if ($this->denuncia_id->removeElement($denunciaId)) {
+            // set the owning side to null (unless already changed)
+            if ($denunciaId->getReceta() === $this) {
+                $denunciaId->setReceta(null);
+            }
+        }
 
         return $this;
     }

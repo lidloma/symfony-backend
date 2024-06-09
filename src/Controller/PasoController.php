@@ -42,8 +42,8 @@ class PasoController extends AbstractController
         $paso->setReceta($receta);
 
         if (isset($data['imagen'])) {
-            $imagenBase64 = base64_decode($data['imagen']);
-            $paso->setImagen($imagenBase64);
+            $imagenData = base64_decode($data['imagen']);
+            $paso->setImagen($imagenData);
         }
 
         $this->entityManager->persist($paso);

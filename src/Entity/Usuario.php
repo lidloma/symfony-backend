@@ -84,17 +84,11 @@ class Usuario implements UserInterface, PasswordAuthenticatedUserInterface
     private bool $isVerified = false;
 
     /**
-     * @var Collection<int, Comentario>
+     * @var Collection<int, Denuncia>
      */
-    #[ORM\ManyToMany(targetEntity: Comentario::class, inversedBy: 'denunciasUsuarios')]
-    private Collection $denunciaComentarios;
-
-    /**
-     * @var Collection<int, Receta>
-     */
-    #[ORM\ManyToMany(targetEntity: Receta::class, inversedBy: 'denunciasUsuarios')]
-    private Collection $denunciasRecetas;
-
+    #[ORM\OneToMany(targetEntity: Denuncia::class, mappedBy: 'usuario')]
+    private Collection $denuncia_id;
+    
     public function __construct()
     {
         $this->comentarios = new ArrayCollection();
@@ -102,8 +96,8 @@ class Usuario implements UserInterface, PasswordAuthenticatedUserInterface
         $this->recetas = new ArrayCollection();
         $this->listas = new ArrayCollection();
         $this->usuarios = new ArrayCollection();
-        $this->denunciaComentarios = new ArrayCollection();
-        $this->denunciasRecetas = new ArrayCollection();
+        $this->denuncia_id = new ArrayCollection();
+  
     }
 
     public function getId(): ?int
@@ -392,53 +386,34 @@ class Usuario implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, Comentario>
+     * @return Collection<int, Denuncia>
      */
-    public function getDenunciaComentarios(): Collection
+    public function getDenunciaId(): Collection
     {
-        return $this->denunciaComentarios;
+        return $this->denuncia_id;
     }
 
-    public function addDenunciaComentario(Comentario $denunciaComentario): static
+    public function addDenunciaId(Denuncia $denunciaId): static
     {
-        if (!$this->denunciaComentarios->contains($denunciaComentario)) {
-            $this->denunciaComentarios->add($denunciaComentario);
+        if (!$this->denuncia_id->contains($denunciaId)) {
+            $this->denuncia_id->add($denunciaId);
+            $denunciaId->setUsuario($this);
         }
 
         return $this;
     }
 
-    public function removeDenunciaComentario(Comentario $denunciaComentario): static
+    public function removeDenunciaId(Denuncia $denunciaId): static
     {
-        $this->denunciaComentarios->removeElement($denunciaComentario);
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Receta>
-     */
-    public function getDenunciasRecetas(): Collection
-    {
-        return $this->denunciasRecetas;
-    }
-
-    public function addDenunciasReceta(Receta $denunciasReceta): static
-    {
-        if (!$this->denunciasRecetas->contains($denunciasReceta)) {
-            $this->denunciasRecetas->add($denunciasReceta);
+        if ($this->denuncia_id->removeElement($denunciaId)) {
+            // set the owning side to null (unless already changed)
+            if ($denunciaId->getUsuario() === $this) {
+                $denunciaId->setUsuario(null);
+            }
         }
 
         return $this;
     }
-
-    public function removeDenunciasReceta(Receta $denunciasReceta): static
-    {
-        $this->denunciasRecetas->removeElement($denunciasReceta);
-
-        return $this;
-    }
-
 
 
 }

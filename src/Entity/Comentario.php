@@ -15,13 +15,13 @@ class Comentario
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $descripcion = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?int $puntuacion = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?string $complejidad = null;
 
     #[ORM\ManyToOne(inversedBy: 'comentarios')]
@@ -39,16 +39,9 @@ class Comentario
     #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'comentario')]
     private Collection $comentarios;
 
-    /**
-     * @var Collection<int, Usuario>
-     */
-    #[ORM\ManyToMany(targetEntity: Usuario::class, mappedBy: 'denunciaComentarios')]
-    private Collection $denunciasUsuarios;
-
     public function __construct()
     {
         $this->comentarios = new ArrayCollection();
-        $this->denunciasUsuarios = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -61,7 +54,7 @@ class Comentario
         return $this->descripcion;
     }
 
-    public function setDescripcion(string $descripcion): static
+    public function setDescripcion(?string $descripcion): static
     {
         $this->descripcion = $descripcion;
 
@@ -73,7 +66,7 @@ class Comentario
         return $this->puntuacion;
     }
 
-    public function setPuntuacion(int $puntuacion): static
+    public function setPuntuacion(?int $puntuacion): ?static
     {
         $this->puntuacion = $puntuacion;
 
@@ -85,7 +78,7 @@ class Comentario
         return $this->complejidad;
     }
 
-    public function setComplejidad(string $complejidad): static
+    public function setComplejidad(?string $complejidad): static
     {
         $this->complejidad = $complejidad;
 
@@ -153,33 +146,6 @@ class Comentario
             if ($comentario->getComentario() === $this) {
                 $comentario->setComentario(null);
             }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Usuario>
-     */
-    public function getDenunciasUsuarios(): Collection
-    {
-        return $this->denunciasUsuarios;
-    }
-
-    public function addDenunciasUsuario(Usuario $denunciasUsuario): static
-    {
-        if (!$this->denunciasUsuarios->contains($denunciasUsuario)) {
-            $this->denunciasUsuarios->add($denunciasUsuario);
-            $denunciasUsuario->addDenunciaComentario($this);
-        }
-
-        return $this;
-    }
-
-    public function removeDenunciasUsuario(Usuario $denunciasUsuario): static
-    {
-        if ($this->denunciasUsuarios->removeElement($denunciasUsuario)) {
-            $denunciasUsuario->removeDenunciaComentario($this);
         }
 
         return $this;
